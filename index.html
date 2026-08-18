@@ -321,8 +321,9 @@ var KALIT={
  Xodim:["xodim","ish haqi","oylik berdim"],
  Zaxira:["zaxira","jamg'arma","jamgarma"]
 };
-var KIRIM_SOZ=["tushdi","tushirdi","tushirib","keldi","kirdi","kirim","to'lab berdi","tolab berdi","oldim pul"];
-var CHIQIM_SOZ=["berdim","to'ladim","toladim","chiqdi","sarfladim","xarid","sotib oldim","ketdi","to'lov qildim"];
+var KIRIM_SOZ=["kirim","tushdi","tushirdi","tushirib","keldi","kirdi","to'lab berdi","tolab berdi","oldim pul"];
+var CHIQIM_SOZ=["chiqim","berdim","to'ladim","toladim","chiqdi","sarfladim","xarid","sotib oldim","ketdi","to'lov qildim"];
+var INKOR=/bormadim|qilmadim|yo'q|yoq\b|o'tkazib|otkazib|ulgurmadim|chiqmadim|qololmadim|turmadim|o'qimadim/;
 
 function sonlarniTop(t){
   var res=[],re=/(\d[\d\s.,]*)\s*(mlrd|mlrd\.|milliard|mln|million|ming|k\b|\$|dollar)?/gi,mm;
@@ -388,13 +389,12 @@ function parseUz(matn){
 
     /* sog'liq */
     var sog={};
-    if(/bomdod/.test(l)) sog.bomdod=!/qazo|o'tkaz|otkaz|uxlab qoldim|turolmadim/.test(l);
+    if(/bomdod/.test(l)) sog.bomdod=!/qazo|o'tkaz|otkaz|uxlab qoldim|turolmadim|turmadim|o'qimadim/.test(l);
     if(/zal|yugur|sport|mashg'ulot|mashgulot|yurdim|velosiped|suzdim/.test(l)){
-      sog.sport=true;
-      var tur=(l.match(/zal|yugur|yurish|velosiped|suzish/)||[])[0];
-      if(tur) sog.sportTur=tur;
+      sog.sport=!INKOR.test(l);
+      if(sog.sport){ var tur=(l.match(/zal|yugur|yurish|velosiped|suzish/)||[])[0]; if(tur) sog.sportTur=tur; }
     }
-    if(/o'qidim|oqidim|kitob o'qi/.test(l)) sog.oqish=true;
+    if(/o'qidim|oqidim|kitob o'qi|o'qimadim/.test(l)) sog.oqish=!INKOR.test(l);
     var vaqt=b.match(/(\d{1,2})[:.](\d{2})/);
     if(vaqt&&/yot|uxla/.test(l)) sog.uyqu=("0"+vaqt[1]).slice(-2)+":"+vaqt[2];
     else if(/yot|uxla/.test(l)&&sonlar.length){ var h=Math.round(sonlar[0].v>100?sonlar[0].v/1000:sonlar[0].v); if(h>=18&&h<=25) sog.uyqu=("0"+(h%24)).slice(-2)+":00"; }
@@ -453,8 +453,8 @@ function opisUz(a){
   if(a.type==="soglik"){
     var q=[];
     if(a.bomdod!==undefined) q.push(a.bomdod?"bomdod ✓":"bomdod ✗");
-    if(a.sport) q.push("mashg'ulot ✓"+(a.sportTur?" ("+a.sportTur+")":""));
-    if(a.oqish) q.push("o'qish ✓");
+    if(a.sport!==undefined) q.push(a.sport?"mashg'ulot ✓"+(a.sportTur?" ("+a.sportTur+")":""):"mashg'ulot ✗");
+    if(a.oqish!==undefined) q.push(a.oqish?"o'qish ✓":"o'qish ✗");
     if(a.uyqu) q.push("yotdi "+a.uyqu);
     if(a.vazn) q.push("vazn "+a.vazn);
     if(a.oila) q.push("oila "+a.oila+" soat");
@@ -463,7 +463,7 @@ function opisUz(a){
   return a.type;
 }
 
-var PARSED=null, MATN="";
+var PARSED=null, MATN="", XATOLAR=[];
 function matnTahlil(){
   var el=document.getElementById("matnIn");
   MATN = el?el.value:"";
@@ -475,10 +475,14 @@ function matnTahlil(){
 }
 function joyla(){
   var lst=PARSED.filter(function(x){return x._on});
-  PARSED=null; MATN=""; belgi("saqlanyapti…");
+  PARSED=null; MATN=""; XATOLAR=[]; belgi("saqlanyapti…");
   var i=0;
   function keyingi(){
-    if(i>=lst.length){ yukla().then(function(){belgi("saqlandi");render()}); return; }
+    if(i>=lst.length){
+      yukla().then(function(){ belgi(XATOLAR.length?"xato bor":"saqlandi"); render(); })
+             .catch(function(e){ XATOLAR.push("qayta yuklash: "+e); render(); });
+      return;
+    }
     var a=lst[i++];
     var p=null;
     if(a.type==="kirim"||a.type==="chiqim")
@@ -507,8 +511,14 @@ function joyla(){
         p=api({amal:"qosh",varaq:"Soglik",obj:JSON.stringify({sana:a.sana,bomdod:!!a.bomdod,sport:!!a.sport,sportTur:a.sportTur||"",uyqu:a.uyqu||"",vazn:a.vazn||"",oila:a.oila||"",oqish:!!a.oqish})});
       }
     }
-    if(!p) p=Promise.resolve();
-    p.then(keyingi,keyingi);
+    if(!p) p=Promise.resolve({ok:true});
+    p.then(function(j){
+      if(j&&j.ok===false) XATOLAR.push(a.type+": "+(j.xato||"server rad etdi"));
+      keyingi();
+    },function(e){
+      XATOLAR.push(a.type+": ulanmadi — "+(e&&e.message?e.message:e));
+      keyingi();
+    });
   }
   keyingi();
 }
@@ -523,6 +533,10 @@ function tezHTML(m){
   if(TZ.rejim==="yozuv"){
     h+='<textarea id="matnIn" rows="3" placeholder="Tarqatuvchidan 3.4 mln tushdi. Korzinkaga 700 ming shaxsiydan. Bomdodga turdim, zalga bordim, 23:30 da yotdim.">'+esc(MATN)+'</textarea>';
     h+='<button class="btn" style="margin-top:8px" onclick="matnTahlil()">Kiritish</button>';
+    if(XATOLAR.length){
+      h+='<div class="warn">Saqlashda xato:<br>'+XATOLAR.map(function(x){return esc(x)}).join("<br>")
+        +'<br><span style="color:var(--dim)">Shu matnni menga yuboring.</span></div>';
+    }
     if(PARSED){
       h+='<div style="margin-top:10px;background:var(--bg);border-radius:9px;padding:10px">'
         +'<div class="lbl"><span>Tasdiqlang</span></div>';
