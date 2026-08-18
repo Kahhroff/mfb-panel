@@ -300,10 +300,243 @@ function halqa(nom,tol,jami,foiz,manba,col){
     +'<span class="n">'+esc(nom)+'</span><span class="v">'+mln(tol)+' / '+mln(jami)+'</span></div>';
 }
 
+
+/* ═══════════ O'ZBEKCHA MATN TAHLILI (offline) ═══════════ */
+var OYLAR={yanvar:1,fevral:2,mart:3,aprel:4,may:5,iyun:6,iyul:7,avgust:8,sentabr:9,sentyabr:9,oktabr:10,noyabr:11,dekabr:12};
+var KALIT={
+ Korzinka:["korzinka","oziq","ovqat","non","magazin","bozor","produkt","go'sht","gosht"],
+ Kommunal:["svet","elektr","gaz","suv","kommunal","internet","jek dom","musor","isitish","nomer","aloqa"],
+ Ayolimga:["ayol","xotin","ayolim","turmush o'rtog"],
+ Qizim:["qiz","pampers","podguznik","bola"],
+ "Ota-ona":["ona","dada","ota","onam","dadam","ota-ona"],
+ Transport:["taksi","taxi","benzin","transport","avtobus","yo'l kira","metro"],
+ "Sog'liq":["dori","shifokor","ukol","dorixona","tibbiy","analiz"],
+ Sadaqa:["sadaqa","ehson","xayriya","zakot"],
+ "Qarz to'lovi":["ilhom","qarz to'lov","qarzga"],
+ Bosmaxona:["bosmaxona","tipografiya","chop etish","chop qil","bosildi"],
+ Tarjimon:["tarjimon","tarjima"],
+ Tahrir:["tahrir","muharrir","sanjar","korrektura","korrektor"],
+ Royalty:["royalty","muallif","mualliflik huquq"],
+ SMM:["smm","reklama","targetolog","kampaniya"],
+ Xodim:["xodim","ish haqi","oylik berdim"],
+ Zaxira:["zaxira","jamg'arma","jamgarma"]
+};
+var KIRIM_SOZ=["tushdi","tushirdi","tushirib","keldi","kirdi","kirim","to'lab berdi","tolab berdi","oldim pul"];
+var CHIQIM_SOZ=["berdim","to'ladim","toladim","chiqdi","sarfladim","xarid","sotib oldim","ketdi","to'lov qildim"];
+
+function sonlarniTop(t){
+  var res=[],re=/(\d[\d\s.,]*)\s*(mlrd|mlrd\.|milliard|mln|million|ming|k\b|\$|dollar)?/gi,mm;
+  while((mm=re.exec(t))!==null){
+    var raw=mm[1].replace(/\s/g,"");
+    if(raw.indexOf(",")>-1&&raw.indexOf(".")===-1) raw=raw.replace(",",".");
+    else raw=raw.replace(/,/g,"");
+    var v=parseFloat(raw); if(isNaN(v)) continue;
+    var b=(mm[2]||"").toLowerCase();
+    if(b.indexOf("mlrd")===0||b.indexOf("milliard")===0) v*=1e9;
+    else if(b.indexOf("mln")===0||b.indexOf("million")===0) v*=1e6;
+    else if(b==="ming"||b==="k") v*=1000;
+    else if(b==="$"||b==="dollar") v*=12006;
+    if(v>0) res.push({v:v,i:mm.index,dollar:(b==="$"||b==="dollar")});
+  }
+  return res;
+}
+function sanaTop(t){
+  var l=t.toLowerCase();
+  for(var oy in OYLAR){
+    var i=l.indexOf(oy);
+    if(i>-1){
+      var old=l.slice(Math.max(0,i-14),i);
+      var km=old.match(/(\d{1,2})\s*[-–]?\s*$/);
+      var kun=km?parseInt(km[1]):1;
+      var yil=new Date(bugun()).getFullYear();
+      var oyn=OYLAR[oy];
+      var d=new Date(yil,oyn-1,kun);
+      if(d<new Date(bugun())&&!km) d=new Date(yil+1,oyn-1,kun);
+      return d.toISOString().slice(0,10);
+    }
+  }
+  if(/erta(ga)?/.test(l)) return dOff(1);
+  if(/kecha/.test(l)) return dOff(-1);
+  return null;
+}
+function kassaTop(t){
+  var l=t.toLowerCase();
+  if(/shaxsiy/.test(l)) return "Shaxsiy";
+  if(/hisob\s*raqam|hisobdan|hisobga|schyot/.test(l)) return "Hisob";
+  if(/karta/.test(l)) return "Karta";
+  return null;
+}
+function katTop(t){
+  var l=t.toLowerCase();
+  for(var c in KALIT){
+    for(var i=0;i<KALIT[c].length;i++){ if(l.indexOf(KALIT[c][i])>-1) return c; }
+  }
+  return null;
+}
+function parseUz(matn){
+  var A=[];
+  /* o'nlik kasrni va vaqtni himoyalash */
+  var t=matn.replace(/(\d)[.,](\d)/g,"$1\u0001$2");
+  var bandlar=t.split(/[.;\n]+|,\s+/).map(function(x){return x.replace(/\u0001/g,".").trim()}).filter(function(x){return x.length>1});
+
+  bandlar.forEach(function(b){
+    var l=b.toLowerCase();
+    var sonlar=sonlarniTop(b.replace(/\d{1,2}[:.]\d{2}/g," "));
+    var kassa=kassaTop(b);
+    var kat=katTop(b);
+    var sana=sanaTop(b);
+
+    /* sog'liq */
+    var sog={};
+    if(/bomdod/.test(l)) sog.bomdod=!/qazo|o'tkaz|otkaz|uxlab qoldim|turolmadim/.test(l);
+    if(/zal|yugur|sport|mashg'ulot|mashgulot|yurdim|velosiped|suzdim/.test(l)){
+      sog.sport=true;
+      var tur=(l.match(/zal|yugur|yurish|velosiped|suzish/)||[])[0];
+      if(tur) sog.sportTur=tur;
+    }
+    if(/o'qidim|oqidim|kitob o'qi/.test(l)) sog.oqish=true;
+    var vaqt=b.match(/(\d{1,2})[:.](\d{2})/);
+    if(vaqt&&/yot|uxla/.test(l)) sog.uyqu=("0"+vaqt[1]).slice(-2)+":"+vaqt[2];
+    else if(/yot|uxla/.test(l)&&sonlar.length){ var h=Math.round(sonlar[0].v>100?sonlar[0].v/1000:sonlar[0].v); if(h>=18&&h<=25) sog.uyqu=("0"+(h%24)).slice(-2)+":00"; }
+    var vz=l.match(/vazn\w*\s*(\d{2,3})/); if(vz) sog.vazn=parseInt(vz[1]);
+    var ol=l.match(/oila\w*\s*(?:bilan\s*)?(\d+(?:\.\d+)?)\s*soat/); if(ol) sog.oila=parseFloat(ol[1]);
+    var sogBor=Object.keys(sog).length>0;
+    if(sogBor){ sog.type="soglik"; sog.sana=sana||bugun(); A.push(sog); }
+
+    if(!sonlar.length) return;
+    var pulSoz=KIRIM_SOZ.concat(CHIQIM_SOZ).some(function(w){return l.indexOf(w)>-1});
+    /* sog'liq bandida pul so'zi va kategoriya bo'lmasa — raqam sog'liqniki */
+    if(sogBor&&!pulSoz&&!kat&&!/tarqatuvchi|o'tkaz|qoldiq|kerak|gacha/.test(l)) return;
+    var summa=sonlar[0].v;
+
+    /* tarqatuvchi */
+    if(/tarqatuvchi|distributor/.test(l)){
+      if(/qarz|hisobot|balans/.test(l)&&!/tushdi|tushirdi|to'lab/.test(l)){
+        A.push({type:"tarqatuvchi",summa:summa,tur:"yangi"});
+      } else {
+        A.push({type:"kirim",summa:summa,kassa:kassa||"Karta",izoh:"tarqatuvchi"});
+        A.push({type:"tarqatuvchi",summa:summa,tur:"tolov"});
+      }
+      return;
+    }
+    /* o'tkazma */
+    if(/o'tkaz|otkaz|ko'chir|kochir/.test(l)&&/dan/.test(l)&&/ga/.test(l)){
+      var dan=null,ga=null;
+      if(/kartadan/.test(l))dan="Karta"; if(/shaxsiydan/.test(l))dan="Shaxsiy"; if(/hisobdan/.test(l))dan="Hisob";
+      if(/kartaga/.test(l))ga="Karta"; if(/shaxsiyga/.test(l))ga="Shaxsiy"; if(/hisobga/.test(l))ga="Hisob";
+      if(dan&&ga&&dan!==ga){ A.push({type:"transfer",summa:summa,kassa:dan,kassaTo:ga}); return; }
+    }
+    /* qoldiq */
+    if(/bor edi|bor\b|qoldiq|qoldi\b/.test(l)&&!/gacha|kerak/.test(l)&&kassa){
+      A.push({type:"qoldiq",kassa:kassa,summa:summa}); return;
+    }
+    /* majburiyat */
+    if(/kerak|gacha|qarzim|berishim|to'lashim|tolashim/.test(l)){
+      A.push({type:"majburiyat",kim:(kat||"To'lov")+(/\s/.test(b)?"":""),summa:summa,sana:sana||dOff(7),tur:kat&&NASHR.indexOf(kat)>=0?"Jamoa":"Boshqa",izoh:b.slice(0,60)});
+      return;
+    }
+    /* kirim / chiqim */
+    var kirim=KIRIM_SOZ.some(function(w){return l.indexOf(w)>-1});
+    var chiqim=CHIQIM_SOZ.some(function(w){return l.indexOf(w)>-1});
+    if(kirim&&!chiqim) A.push({type:"kirim",summa:summa,kassa:kassa||"Karta",izoh:""});
+    else A.push({type:"chiqim",summa:summa,kassa:kassa||(kat&&SHAX.indexOf(kat)>=0?"Shaxsiy":"Karta"),cat:kat||"Boshqa",izoh:""});
+  });
+  return A;
+}
+function opisUz(a){
+  if(a.type==="kirim") return "Kirim "+fmt(a.summa)+" · "+KNOM[a.kassa]+(a.izoh?" · "+a.izoh:"");
+  if(a.type==="chiqim") return "Chiqim "+fmt(a.summa)+" · "+a.cat+" · "+KNOM[a.kassa];
+  if(a.type==="transfer") return "O'tkazma "+fmt(a.summa)+" · "+KNOM[a.kassa]+" → "+KNOM[a.kassaTo];
+  if(a.type==="tarqatuvchi") return "Tarqatuvchi "+(a.tur==="tolov"?"to'lov −":"yangi +")+fmt(a.summa);
+  if(a.type==="qoldiq") return "Qoldiq: "+KNOM[a.kassa]+" = "+fmt(a.summa);
+  if(a.type==="majburiyat") return "Majburiyat "+fmt(a.summa)+" · "+a.sana+" · "+(a.izoh||"");
+  if(a.type==="soglik"){
+    var q=[];
+    if(a.bomdod!==undefined) q.push(a.bomdod?"bomdod ✓":"bomdod ✗");
+    if(a.sport) q.push("mashg'ulot ✓"+(a.sportTur?" ("+a.sportTur+")":""));
+    if(a.oqish) q.push("o'qish ✓");
+    if(a.uyqu) q.push("yotdi "+a.uyqu);
+    if(a.vazn) q.push("vazn "+a.vazn);
+    if(a.oila) q.push("oila "+a.oila+" soat");
+    return "Sog'liq: "+q.join(" · ");
+  }
+  return a.type;
+}
+
+var PARSED=null, MATN="";
+function matnTahlil(){
+  var el=document.getElementById("matnIn");
+  MATN = el?el.value:"";
+  if(!MATN.trim()) return;
+  var a=parseUz(MATN);
+  if(!a.length){ belgi("tushunilmadi"); return; }
+  a.forEach(function(x,i){x._i=i;x._on=true});
+  PARSED=a; render();
+}
+function joyla(){
+  var lst=PARSED.filter(function(x){return x._on});
+  PARSED=null; MATN=""; belgi("saqlanyapti…");
+  var i=0;
+  function keyingi(){
+    if(i>=lst.length){ yukla().then(function(){belgi("saqlandi");render()}); return; }
+    var a=lst[i++];
+    var p=null;
+    if(a.type==="kirim"||a.type==="chiqim")
+      p=api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:a.sana||bugun(),tur:a.type,kassa:a.kassa,kassaTo:"",summa:a.summa,cat:a.cat||"",objId:"",izoh:a.izoh||""})});
+    else if(a.type==="transfer")
+      p=api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:bugun(),tur:"transfer",kassa:a.kassa,kassaTo:a.kassaTo,summa:a.summa,cat:"",objId:"",izoh:""})});
+    else if(a.type==="tarqatuvchi")
+      p=api({amal:"qosh",varaq:"Tarqatuvchi",obj:JSON.stringify({sana:bugun(),summa:a.summa,tur:a.tur,izoh:""})});
+    else if(a.type==="majburiyat")
+      p=api({amal:"qosh",varaq:"Majburiyat",obj:JSON.stringify({kim:a.izoh||"To'lov",summa:a.summa,sana:a.sana,tur:a.tur||"Boshqa",manba:"Karta",tolangan:0,paid:false})});
+    else if(a.type==="qoldiq"){
+      var Y=D.Yozuv||[];
+      var inn=Y.filter(function(x){return x.tur==="kirim"&&x.kassa===a.kassa}).reduce(function(s,x){return s+n(x.summa)},0);
+      var out=Y.filter(function(x){return x.tur==="chiqim"&&x.kassa===a.kassa}).reduce(function(s,x){return s+n(x.summa)},0);
+      p=api({amal:"kassa",nom:a.kassa,qiymat:a.summa-inn+out});
+    }
+    else if(a.type==="soglik"){
+      var r=(D.Soglik||[]).filter(function(x){return x.sana===a.sana})[0];
+      if(r){
+        var zan=Promise.resolve();
+        ["bomdod","sport","oqish","uyqu","vazn","oila","sportTur"].forEach(function(k){
+          if(a[k]!==undefined) zan=zan.then(function(){return api({amal:"yangila",varaq:"Soglik",id:a.sana,maydon:k,qiymat:a[k]})});
+        });
+        p=zan;
+      } else {
+        p=api({amal:"qosh",varaq:"Soglik",obj:JSON.stringify({sana:a.sana,bomdod:!!a.bomdod,sport:!!a.sport,sportTur:a.sportTur||"",uyqu:a.uyqu||"",vazn:a.vazn||"",oila:a.oila||"",oqish:!!a.oqish})});
+      }
+    }
+    if(!p) p=Promise.resolve();
+    p.then(keyingi,keyingi);
+  }
+  keyingi();
+}
+
 /* ═══════════ TEZ KIRITISH ═══════════ */
-var TZ={tur:"chiqim",cat:"Korzinka",kassa:"Karta",kassaTo:"Shaxsiy",sum:0,izoh:"",obj:""};
+var TZ={rejim:"yozuv",tur:"chiqim",cat:"Korzinka",kassa:"Karta",kassaTo:"Shaxsiy",sum:0,izoh:"",obj:""};
 function tezHTML(m){
   var h='<div class="card"><div class="lbl"><span>Kiritish</span><b id="holat">'+esc(holat)+'</b></div>';
+  h+='<div class="pill">'
+    +'<button class="'+(TZ.rejim==="yozuv"?"on":"")+'" onclick="TZ.rejim=\'yozuv\';render()">Yozuv</button>'
+    +'<button class="'+(TZ.rejim!=="yozuv"?"on":"")+'" onclick="TZ.rejim=\'tugma\';render()">Tugmali</button></div>';
+  if(TZ.rejim==="yozuv"){
+    h+='<textarea id="matnIn" rows="3" placeholder="Tarqatuvchidan 3.4 mln tushdi. Korzinkaga 700 ming shaxsiydan. Bomdodga turdim, zalga bordim, 23:30 da yotdim.">'+esc(MATN)+'</textarea>';
+    h+='<button class="btn" style="margin-top:8px" onclick="matnTahlil()">Kiritish</button>';
+    if(PARSED){
+      h+='<div style="margin-top:10px;background:var(--bg);border-radius:9px;padding:10px">'
+        +'<div class="lbl"><span>Tasdiqlang</span></div>';
+      PARSED.forEach(function(a){
+        h+='<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--card2);font-size:11.5px;line-height:1.4">'
+          +'<input type="checkbox" style="width:15px;height:15px;margin-top:2px" '+(a._on?"checked":"")+' onchange="PARSED['+a._i+']._on=this.checked">'
+          +'<span>'+esc(opisUz(a))+'</span></label>';
+      });
+      h+='<div style="display:flex;gap:7px;margin-top:9px">'
+        +'<button class="btn" style="background:var(--mint)" onclick="joyla()">Joylash</button>'
+        +'<button class="btn2" style="flex:1" onclick="PARSED=null;render()">Bekor</button></div></div>';
+    }
+    return h+'</div>';
+  }
   h+='<div class="pill">';
   [["chiqim","Chiqim"],["kirim","Kirim"],["transfer","O\'tkazma"]].forEach(function(x){
     h+='<button class="'+(TZ.tur===x[0]?"on":"")+'" onclick="TZ.tur=\''+x[0]+'\';render()">'+x[1]+'</button>';
