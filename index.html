@@ -442,6 +442,30 @@ function ekranPul(m){
 
   h+='<div class="card"><div class="lbl"><span>Kirim / chiqim · 30 kun</span></div>'+chartSm("g2",optBar(m))+'</div>';
 
+  if(m.kirTaq.length){
+    var RANG=[c("mint"),c("sky"),c("lav"),c("amber"),c("rose"),c("coral")];
+    h+='<div class="card"><div class="lbl"><span>Kirim taqsimoti</span><b style="color:'+c("mint")+'">'+mln(m.kirJ)+' mln</b></div>'
+      +chart("g6",optDonutUmum(m.kirTaq,m.kirJ,RANG));
+    m.kirTaq.forEach(function(x,i){
+      var col=x.c||RANG[i%RANG.length];
+      h+='<div class="row"><span class="ico">'+ico("Kirim",col,15)+'</span><div style="flex:1">'
+        +'<div style="font-size:11.5px">'+esc(x.n)+'</div>'
+        +'<div class="bar" style="height:4px;margin-top:4px"><div style="width:'+(x.v/m.kirJ*100)+'%;background:'+col+'"></div></div></div>'
+        +'<div style="text-align:right"><div style="font-family:var(--mono);font-size:11.5px;color:'+c("mint")+'">'+fmt(x.v)+'</div>'
+        +'<div style="font-family:var(--mono);font-size:8px;color:var(--dim)">'+Math.round(x.v/m.kirJ*100)+'%</div></div></div>';
+    });
+    if(m.kirKassa.length>1){
+      h+='<div style="display:flex;gap:7px;margin-top:9px">';
+      m.kirKassa.forEach(function(x){
+        h+='<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px">'
+          +'<div style="font-size:9px;color:var(--mute)">'+x.n+'</div>'
+          +'<div style="font-family:var(--mono);font-size:14px;color:'+x.c+'">'+mln(x.v)+'</div></div>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  }
+
   if(m.xar.length){
     h+='<div class="card"><div class="lbl"><span>Xarajat taqsimoti</span><b>'+mln(m.xarJ)+' mln</b></div>'
       +chart("g3",optDonut(m))
