@@ -301,16 +301,18 @@ function tip(){return {trigger:"axis",backgroundColor:c("card3"),borderWidth:0,
 
 function optGorizont(m){
   var x=m.hor.map(function(p){return p.d.slice(5)});
-  function ser(k,col,nom){return {name:nom,type:"line",data:m.hor.map(function(p){return Math.round(p[k])}),
-    smooth:true,symbol:"none",lineStyle:{width:2.4,color:col},
+  function ser(k,col,nom){return {name:nom,type:"line",color:col,
+    data:m.hor.map(function(p){return Math.round(p[k])}),
+    smooth:true,symbol:"none",itemStyle:{color:col},lineStyle:{width:2.4,color:col},
     areaStyle:k==="K"?{color:grad(col,"44","00")}:undefined}}
   return {grid:{left:6,right:6,top:16,bottom:20,containLabel:true},
     tooltip:Object.assign(tip(),{valueFormatter:function(v){return fmt(v)}}),
     xAxis:Object.assign({type:"category",data:x,boundaryGap:false},AXIS,{axisLabel:{color:c("dim"),fontSize:8,interval:9}}),
     yAxis:Object.assign({type:"value"},AXIS,{axisLabel:{color:c("dim"),fontSize:8,formatter:function(v){return (v/1e6).toFixed(0)}},
       splitLine:{show:true,lineStyle:{color:c("card2")}}}),
-    series:[ser("K",c("sky"),"Karta"),ser("H",c("amber"),"Hisob"),ser("S",c("lav"),"Shaxsiy"),
-      {type:"line",data:m.hor.map(function(){return 0}),symbol:"none",lineStyle:{color:c("coral"),width:1,type:"dashed"},silent:true,tooltip:{show:false}}]};
+    series:[ser("K",KCOL.Karta,"Karta"),ser("H",KCOL.Hisob,"Hisob raqam"),ser("S",KCOL.Shaxsiy,"Shaxsiy"),
+      {name:"",type:"line",data:m.hor.map(function(){return 0}),symbol:"none",
+      lineStyle:{color:c("coral"),width:1,type:"dashed"},silent:true,tooltip:{show:false}}]};
 }
 function optDonutUmum(lst,jami,ranglar){
   return {tooltip:{trigger:"item",backgroundColor:c("card3"),borderWidth:0,textStyle:{color:c("txt"),fontSize:11},
