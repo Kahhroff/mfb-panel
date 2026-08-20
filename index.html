@@ -88,7 +88,14 @@ var KNOM={Karta:"Karta",Hisob:"Hisob raqam",Shaxsiy:"Shaxsiy"};
 var CCOL={Korzinka:c("mint"),Kommunal:c("sky"),Ayolimga:c("rose"),Qizim:c("lav"),"Ota-ona":c("lav"),
 Transport:c("dim"),"Sog'liq":c("coral"),Sadaqa:c("mint"),"Qarz to'lovi":c("sky"),Bosmaxona:c("amber"),
 Tarjimon:c("amber"),Tahrir:c("amber"),Korrektura:c("amber"),Dizayn:c("sky"),Royalty:c("coral"),SMM:c("amber"),Xodim:c("amber"),Zaxira:c("mint"),Boshqa:c("dim")};
-function ccol(x){return CCOL[x]||c("dim")}
+var PALITRA=["#43E39B","#4FA9F5","#FFC24B","#FF7A5C","#B18CFF","#FF6F9C","#3FD9C9","#F5A65B",
+"#7ED957","#6C8CFF","#FFD84D","#FF8FA3","#5BC0EB","#C77DFF","#FFAD5B","#4ECDC4","#F06595","#9BE564"];
+var _RANG={},_RI=0;
+function rangOl(nom){
+  if(!_RANG[nom]){_RANG[nom]=PALITRA[_RI%PALITRA.length];_RI++}
+  return _RANG[nom];
+}
+function ccol(x){return CCOL[x]||rangOl(x)}
 
 function n(v){var x=Number(v);return isNaN(x)?0:x}
 function fmt(v){return isNaN(v)||v===null?"—":Math.round(v).toLocaleString("ru-RU").replace(/,/g," ")}
@@ -313,7 +320,8 @@ function optDonutUmum(lst,jami,ranglar){
       label:{show:true,position:"center",formatter:function(){return mln(jami)+"\nmln"},
         color:c("txt"),fontSize:17,fontFamily:"var(--mono)",fontWeight:700,lineHeight:16},
       emphasis:{label:{show:true,fontSize:14,formatter:function(p){return p.name+"\n"+mln(p.value)+" mln"}}},
-      data:lst.map(function(x,i){return {name:x.n,value:x.v,itemStyle:{color:x.c||ranglar[i%ranglar.length]}}})}]};
+      data:lst.map(function(x,i){return {name:x.n,value:x.v,
+        itemStyle:{color:PALITRA[i%PALITRA.length]}}})}]};
 }
 function optDonut(m){
   return {tooltip:{trigger:"item",backgroundColor:c("card3"),borderWidth:0,textStyle:{color:c("txt"),fontSize:11},
@@ -323,7 +331,8 @@ function optDonut(m){
       label:{show:true,position:"center",formatter:function(){return mln(m.xarJ)+"\nmln"},
         color:c("txt"),fontSize:17,fontFamily:"var(--mono)",fontWeight:700,lineHeight:16},
       emphasis:{label:{show:true,fontSize:15,formatter:function(p){return p.name+"\n"+mln(p.value)+" mln"}}},
-      data:m.xar.map(function(x){return {name:x.n,value:x.v,itemStyle:{color:x.c}}})}]};
+      data:m.xar.map(function(x,i){return {name:x.n,value:x.v,
+        itemStyle:{color:PALITRA[i%PALITRA.length]}}})}]};
 }
 function optBar(m){
   var x=[],ki=[],chi=[];
@@ -447,7 +456,7 @@ function ekranPul(m){
     h+='<div class="card"><div class="lbl"><span>Kirim taqsimoti</span><b style="color:'+c("mint")+'">'+mln(m.kirJ)+' mln</b></div>'
       +chart("g6",optDonutUmum(m.kirTaq,m.kirJ,RANG));
     m.kirTaq.forEach(function(x,i){
-      var col=x.c||RANG[i%RANG.length];
+      var col=PALITRA[i%PALITRA.length];
       h+='<div class="row"><span class="ico">'+ico("Kirim",col,15)+'</span><div style="flex:1">'
         +'<div style="font-size:11.5px">'+esc(x.n)+'</div>'
         +'<div class="bar" style="height:4px;margin-top:4px"><div style="width:'+(x.v/m.kirJ*100)+'%;background:'+col+'"></div></div></div>'
@@ -472,10 +481,11 @@ function ekranPul(m){
       +'<div style="display:flex;gap:7px;margin-top:8px">'
       +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Ro\'zg\'or</div><div style="font-family:var(--mono);font-size:15px;color:'+c("lav")+'">'+mln(m.xarShax)+'</div></div>'
       +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Nashriyot</div><div style="font-family:var(--mono);font-size:15px;color:'+c("amber")+'">'+mln(m.xarNashr)+'</div></div></div>';
-    m.xar.forEach(function(x){
-      h+='<div class="row"><span class="ico">'+ico(x.n,x.c,15)+'</span><div style="flex:1">'
+    m.xar.forEach(function(x,i){
+      var xc=PALITRA[i%PALITRA.length];
+      h+='<div class="row"><span class="ico">'+ico(x.n,xc,15)+'</span><div style="flex:1">'
         +'<div style="font-size:11.5px">'+esc(x.n)+'</div>'
-        +'<div class="bar" style="height:4px;margin-top:4px"><div style="width:'+(x.v/m.xarJ*100)+'%;background:'+x.c+'"></div></div></div>'
+        +'<div class="bar" style="height:4px;margin-top:4px"><div style="width:'+(x.v/m.xarJ*100)+'%;background:'+xc+'"></div></div></div>'
         +'<div style="text-align:right"><div style="font-family:var(--mono);font-size:11.5px">'+fmt(x.v)+'</div>'
         +'<div style="font-family:var(--mono);font-size:8px;color:var(--dim)">'+Math.round(x.v/m.xarJ*100)+'%</div></div></div>';
     });
