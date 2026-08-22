@@ -242,8 +242,15 @@ function hisob(){
   Y.forEach(function(x){if(x.tur==="chiqim"&&x.cat){kats[x.cat]=(kats[x.cat]||0)+n(x.summa)}});
   m.xar=Object.keys(kats).map(function(k){return{n:k,v:kats[k],c:ccol(k)}}).sort(function(a,b2){return b2.v-a.v});
   m.xarJ=m.xar.reduce(function(a,x){return a+x.v},0);
-  m.xarShax=m.xar.filter(function(x){return SHAX.indexOf(x.n)>=0}).reduce(function(a,x){return a+x.v},0);
-  m.xarNashr=m.xar.filter(function(x){return NASHR.indexOf(x.n)>=0}).reduce(function(a,x){return a+x.v},0);
+  function katGuruh(nom){
+    if(SHAX.indexOf(nom)>=0)return "Shaxsiy";
+    if(NASHR.indexOf(nom)>=0)return "Nashriyot";
+    var r=(D.Kategoriya||[]).filter(function(x){return String(x.nom).toLowerCase()===String(nom).toLowerCase()})[0];
+    if(r&&r.guruh)return /nashr/i.test(r.guruh)?"Nashriyot":"Shaxsiy";
+    return null;
+  }
+  m.xarShax=m.xar.filter(function(x){return katGuruh(x.n)==="Shaxsiy"}).reduce(function(a,x){return a+x.v},0);
+  m.xarNashr=m.xar.filter(function(x){return katGuruh(x.n)==="Nashriyot"}).reduce(function(a,x){return a+x.v},0);
 
   var kd=m.kirim30>0?m.kirim30/30:0;
   m.hor=[];var v={};KAS.forEach(function(k){v[k]=m.kas[k]});
