@@ -230,9 +230,29 @@ function hisob(){
   var oq=q.muddat?Math.max(1,Math.round((new Date(q.muddat)-new Date(bugun()))/864e5/30.4)):null;
   m.qarz.oyQ=oq;m.qarz.temp=oq?m.qarz.qoldiq/oq:null;
 
-  var kir={};
-  Y.forEach(function(x){if(x.tur==="kirim"){var k=x.cat||x.izoh||"Boshqa kirim";kir[k]=(kir[k]||0)+n(x.summa)}});
-  m.kirTaq=Object.keys(kir).map(function(k){return{n:k,v:kir[k],c:ccol(k)}}).sort(function(a,b2){return b2.v-a.v});
+  function nrm(t){return String(t||"").trim().toLowerCase().replace(/['\u2018\u2019]/g,"")}
+  var kir={},kirNom={};
+  Y.forEach(function(x){
+    if(x.tur!=="kirim")return;
+    var xom=x.cat||x.izoh||"Boshqa kirim";
+    var k=nrm(xom);
+    /* imlo farqi bo'lgan nomlarni birlashtirish */
+    for(var mavjud in kirNom){
+      if(mavjud===k)break;
+      if(Math.abs(mavjud.length-k.length)<=2){
+        var f=0,uz=Math.max(mavjud.length,k.length);
+        for(var i2=0,j2=0;i2<mavjud.length||j2<k.length;){
+          if(mavjud[i2]===k[j2]){i2++;j2++}
+          else{f++;if(mavjud.length>k.length)i2++;else if(k.length>mavjud.length)j2++;else{i2++;j2++}}
+          if(f>1)break;
+        }
+        if(f<=1){k=mavjud;break}
+      }
+    }
+    if(!kirNom[k])kirNom[k]=xom.charAt(0).toUpperCase()+xom.slice(1);
+    kir[k]=(kir[k]||0)+n(x.summa);
+  });
+  m.kirTaq=Object.keys(kir).map(function(k){return{n:kirNom[k]||k,v:kir[k],c:ccol(k)}}).sort(function(a,b2){return b2.v-a.v});
   m.kirJ=m.kirTaq.reduce(function(a,x){return a+x.v},0);
   var kirKas={};
   Y.forEach(function(x){if(x.tur==="kirim"){kirKas[x.kassa]=(kirKas[x.kassa]||0)+n(x.summa)}});
@@ -402,8 +422,16 @@ function halqaHTML(nom,tol,jami,foiz,manba,col){
 /* ═════ EKRANLAR ═════ */
 function ekranBugun(m){
   var h="";
-  h+='<div class="card"><div class="lbl"><span>Kassa qoldig\'i</span></div>'
+  var kurs=0,kursDiff=0;
+  (D.Sozlama||[]).forEach(function(r){
+    if(String(r.kalit)==="usd")kurs=n(r.qiymat);
+    if(String(r.kalit)==="usd_diff")kursDiff=n(r.qiymat);
+  });
+  h+='<div class="card"><div class="lbl"><span>Kassa qoldig\'i</span>'
+    +(kurs?'<b style="color:'+(kursDiff>0?c("coral"):kursDiff<0?c("mint"):c("mute"))+'">1 USD = '+fmt(kurs)
+      +(kursDiff>0?' \u25b2':kursDiff<0?' \u25bc':'')+'</b>':'')+'</div>'
     +'<div class="big" style="color:'+(m.kassa<20e6?c("coral"):c("mint"))+'">'+fmt(m.kassa)+'</div>'
+    +(kurs?'<div style="font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:5px">\u2248 $'+fmt(m.kassa/kurs)+'</div>':'')
     +'<div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">';
   KAS.forEach(function(k){
     h+='<div style="flex:1 1 108px;background:var(--card2);border-radius:14px;padding:10px 11px">'
