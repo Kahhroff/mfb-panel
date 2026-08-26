@@ -205,13 +205,22 @@ function hisob(){
   m.dist={bosh:db,tol:dt,yangi:dy,qarz:db+dy-dt,foiz:db+dy?dt/(db+dy)*100:0,
     harakat:T.filter(function(x){return x.tur!=="boshlangich"})};
 
+  function nrmk(x){return String(x||"").trim().toLowerCase().replace(/['\u2018\u2019]/g,"")}
+  var FOIZ={};
+  (D.KitobFoiz||[]).forEach(function(r){if(r.kitob)FOIZ[nrmk(r.kitob)]=n(r.foiz)||8});
   m.kitob=K.map(function(bk){
     var pre=n(bk.huquq)+n(bk.tarjima)+n(bk.tahrir)+n(bk.korrektura)+n(bk.dizayn)+n(bk.smm);
-    var chop=n(bk.chopDona)*n(bk.tiraj),xar=pre+chop;
+    var trj=(D.Tiraj||[]).filter(function(t){return nrmk(t.kitob)===nrmk(bk.nom)})
+      .sort(function(a,b2){return n(a.raqam)-n(b2.raqam)});
+    var tiraj=0,chop=0;
+    if(trj.length){trj.forEach(function(t){tiraj+=n(t.nusxa);chop+=n(t.nusxa)*n(t.narxDona)})}
+    else{tiraj=n(bk.tiraj);chop=n(bk.chopDona)*tiraj}
+    var xar=pre+chop;
     var sot=n(bk.s50)+n(bk.s60),tus=n(bk.s50)*n(bk.dist)+n(bk.s60)*n(bk.retail);
-    return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:n(bk.tiraj),qoldiq:n(bk.qoldiq),
-      dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:tus*.08,
-      sof:tus-xar-tus*.08,tannarx:n(bk.tiraj)?xar/n(bk.tiraj):0,qoldiqTolov:n(bk.qoldiqTolov)};
+    var foiz=FOIZ[nrmk(bk.nom)]||8, roy=tus*foiz/100;
+    return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:tiraj,qoldiq:n(bk.qoldiq),
+      dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:roy,foiz:foiz,
+      tirajlar:trj,sof:tus-xar-roy,tannarx:tiraj?xar/tiraj:0,qoldiqTolov:n(bk.qoldiqTolov)};
   });
   m.ombor=m.kitob.reduce(function(a,x){return a+x.qoldiq*x.dist},0);
   m.muzlagan=m.kitob.filter(function(x){return x.holat!=="Savdoda"}).reduce(function(a,x){return a+x.pre-x.qoldiqTolov},0);
@@ -614,7 +623,10 @@ function ekranKitob(m){
       +'<div style="font-size:9.5px;color:var(--dim);margin-top:3px">'+esc(b2.izoh||"")+'</div></div>'
       +'<div style="text-align:right"><div style="font-family:var(--mono);font-size:17px;font-weight:700;color:'+(b2.sof>=0?c("mint"):c("coral"))+'">'+mln(b2.sof)+'</div>'
       +'<div style="font-size:8px;color:var(--dim)">mln sof</div></div></div>'
-      +'<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:6px">xarajat '+mln(b2.xar)+' · tushum '+mln(b2.tus)+' · tannarx '+fmt(b2.tannarx)+'</div></div>';
+      +'<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:6px">xarajat '+mln(b2.xar)+' · tushum '+mln(b2.tus)+' · tannarx '+fmt(b2.tannarx)+' · royalty '+b2.foiz+'%</div>'
+      +(b2.tirajlar&&b2.tirajlar.length?'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:3px">'
+        +b2.tirajlar.map(function(t){return t.raqam+'-tiraj '+fmt(n(t.nusxa))+'\u00d7'+fmt(n(t.narxDona))+(t.holat==="yopilgan"?" \u2713":"")}).join(" \u00b7 ")+'</div>':'')
+      +'</div>';
   });
   return h+'</div>';
 }
