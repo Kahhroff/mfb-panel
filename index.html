@@ -66,6 +66,14 @@ nav button.on i{background:var(--amber)}
   line-height:1.45;margin-top:9px}
 .load{text-align:center;padding:70px 20px;color:var(--mute);font-family:var(--mono);font-size:12px}
 .bar{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;display:flex}
+.ovl{position:fixed;inset:0;background:rgba(5,10,15,.82);backdrop-filter:blur(6px);z-index:60;
+  display:flex;align-items:flex-end;justify-content:center;animation:fo .2s ease}
+@keyframes fo{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--card);border:1px solid var(--line);border-radius:22px 22px 0 0;width:100%;
+  max-width:640px;max-height:82vh;overflow-y:auto;padding:18px 16px 28px;animation:up .28s cubic-bezier(.4,0,.2,1)}
+@keyframes up{from{transform:translateY(40px)}to{transform:none}}
+.tap{cursor:pointer;position:relative}
+.tap:after{content:"›";position:absolute;right:11px;top:10px;color:var(--dim);font-size:17px}
 </style>
 </head>
 <body>
@@ -77,6 +85,8 @@ var API="https://script.google.com/macros/s/AKfycby0AbDC_RZEFG_Six9rwGsWrRlHDWM1
 var MAXFIY="ram5657";
 
 var D=null, tab="bugun", holat="", CH=[];
+var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",sum:0,izoh:""};
+var MODAL=null;
 var CATS=["Korzinka","Kommunal","Ayolimga","Qizim","Ota-ona","Transport","Sog'liq","Sadaqa","Qarz to'lovi","Bosmaxona","Tarjimon","Tahrir","Korrektura","Dizayn","Royalty","SMM","Xodim","Zaxira","Boshqa"];
 var SHAX=["Korzinka","Kommunal","Ayolimga","Qizim","Ota-ona","Transport","Sog'liq","Sadaqa"];
 var NASHR=["Bosmaxona","Tarjimon","Tahrir","Korrektura","Dizayn","Royalty","SMM","Xodim"];
@@ -212,15 +222,22 @@ function hisob(){
     var pre=n(bk.huquq)+n(bk.tarjima)+n(bk.tahrir)+n(bk.korrektura)+n(bk.dizayn)+n(bk.smm);
     var trj=(D.Tiraj||[]).filter(function(t){return nrmk(t.kitob)===nrmk(bk.nom)})
       .sort(function(a,b2){return n(a.raqam)-n(b2.raqam)});
-    var tiraj=0,chop=0;
-    if(trj.length){trj.forEach(function(t){tiraj+=n(t.nusxa);chop+=n(t.nusxa)*n(t.narxDona)})}
-    else{tiraj=n(bk.tiraj);chop=n(bk.chopDona)*tiraj}
+    var tiraj=0,chop=0,jT=0,jC=0,narxsiz=false;
+    if(trj.length){trj.forEach(function(t){
+      var nu=n(t.nusxa),nx=n(t.narxDona);
+      tiraj+=nu;chop+=nu*nx;
+      if(String(t.holat)!=="yopilgan"){jT+=nu;jC+=nu*nx}
+      else if(!nx)narxsiz=true;
+    })}
+    else{tiraj=n(bk.tiraj);chop=n(bk.chopDona)*tiraj;jT=tiraj;jC=chop}
     var xar=pre+chop;
     var sot=n(bk.s50)+n(bk.s60),tus=n(bk.s50)*n(bk.dist)+n(bk.s60)*n(bk.retail);
     var foiz=FOIZ[nrmk(bk.nom)]||8, roy=tus*foiz/100;
     return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:tiraj,qoldiq:n(bk.qoldiq),
       dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:roy,foiz:foiz,
-      tirajlar:trj,sof:tus-xar-roy,tannarx:tiraj?xar/tiraj:0,qoldiqTolov:n(bk.qoldiqTolov)};
+      tirajlar:trj,narxsiz:narxsiz,sof:tus-xar-roy,
+      tannarx:(jT&&narxsiz)?(jC/jT+(tiraj?pre/tiraj:0)):(tiraj?xar/tiraj:0),
+      qoldiqTolov:n(bk.qoldiqTolov)};
   });
   m.ombor=m.kitob.reduce(function(a,x){return a+x.qoldiq*x.dist},0);
   m.muzlagan=m.kitob.filter(function(x){return x.holat!=="Savdoda"}).reduce(function(a,x){return a+x.pre-x.qoldiqTolov},0);
@@ -588,8 +605,14 @@ function ekranKitob(m){
     +'<div style="width:'+m.dist.foiz+'%;height:100%;background:linear-gradient(90deg,'+c("sky")+','+c("mint")+')"></div>'
     +'<span style="position:absolute;left:9px;top:2px;font-family:var(--mono);font-size:10px;font-weight:700;color:'+(m.dist.foiz>24?"#0A1118":c("txt"))+'">'
     +fmt(m.dist.tol)+' / '+fmt(m.dist.bosh+m.dist.yangi)+'</span></div>'
-    +'<div class="grid">'+kpi("Qoldiq qarz",mln(m.dist.qarz),"mln",c("amber"),"")
-    +kpi("Undagi ombor",mln(m.ombor),"mln","","sotilmagan nusxa")+'</div><div style="margin-top:9px">';
+    +'<div class="grid">'
+    +'<div class="kpi tap" onclick="modalOch(\'qarz\')"><div class="k">Qoldiq qarz</div>'
+    +'<div class="v" style="color:'+c("amber")+'">'+mln(m.dist.qarz)+' <span style="font-size:9px;color:var(--dim)">mln</span></div>'
+    +'<div class="s">tafsilot uchun bosing</div></div>'
+    +'<div class="kpi tap" onclick="modalOch(\'ombor\')"><div class="k">Undagi ombor</div>'
+    +'<div class="v">'+mln(m.ombor)+' <span style="font-size:9px;color:var(--dim)">mln</span></div>'
+    +'<div class="s">sotilmagan nusxa</div></div>'
+    +'</div><div style="margin-top:9px">';
   m.dist.harakat.slice().reverse().slice(0,6).forEach(function(x){
     h+='<div class="row"><span style="font-family:var(--mono);font-size:9px;color:var(--dim);min-width:34px">'+String(x.sana).slice(5,10)+'</span>'
       +'<span style="flex:1;color:var(--mute);font-size:9.5px">'+(x.tur==="tolov"?"to'lov":"yangi tiraj")+'</span>'
@@ -673,6 +696,116 @@ function ekranMaqsad(m){
   return h;
 }
 
+function ekranKirit(m){
+  var kats=CATS.slice();
+  (D.Kategoriya||[]).forEach(function(r){if(r.nom&&kats.indexOf(r.nom)<0)kats.push(r.nom)});
+
+  /* tez-tez ishlatilganlar */
+  var tez={};
+  (D.Yozuv||[]).slice(-60).forEach(function(x){
+    if(x.tur!=="chiqim"||!x.cat)return;
+    var k=x.cat+"|"+x.kassa+"|"+n(x.summa);
+    tez[k]=(tez[k]||0)+1;
+  });
+  var tezLst=Object.keys(tez).map(function(k){var p=k.split("|");
+    return{cat:p[0],kassa:p[1],sum:n(p[2]),soni:tez[k]}})
+    .filter(function(x){return x.soni>=2&&x.sum>0})
+    .sort(function(a,b2){return b2.soni-a.soni}).slice(0,6);
+
+  var h='<div class="card"><div class="lbl"><span>Yangi yozuv</span><b id="holat">'+esc(holat)+'</b></div>';
+
+  h+='<div class="pill">';
+  [["chiqim","Chiqim"],["kirim","Kirim"],["transfer","O\'tkazma"]].forEach(function(x){
+    h+='<button class="'+(KI.tur===x[0]?"on":"")+'" onclick="KI.tur=\''+x[0]+'\';render()">'+x[1]+'</button>';
+  });
+  h+='</div>';
+
+  h+='<div class="acc" style="margin-bottom:10px">';
+  KAS.forEach(function(k){
+    var on=KI.kassa===k;
+    h+='<button onclick="KI.kassa=\''+k+'\';render()" style="background:'+(on?KCOL[k]:"var(--card2)")
+      +';color:'+(on?"#0A1118":"var(--mute)")+';font-weight:'+(on?700:400)+'">'+KNOM[k]+'</button>';
+  });
+  h+='</div>';
+
+  if(KI.tur==="chiqim"){
+    h+='<div class="catgrid">';
+    kats.forEach(function(cn){
+      var on=KI.cat===cn, col=ccol(cn);
+      h+='<button onclick="KI.cat=\''+cn.replace(/'/g,"\\'")+'\';render()" style="border-color:'
+        +(on?col:"transparent")+';background:'+(on?"var(--card3)":"var(--card2)")+';color:'
+        +(on?"var(--txt)":"var(--dim)")+'">'+ico(cn,on?col:c("dim"),17)+'<span>'+esc(cn)+'</span></button>';
+    });
+    h+='</div>';
+  }
+
+  /* summa ko'rsatkichi */
+  h+='<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px">'
+    +'<div style="font-size:9px;color:var(--dim)">'+(KI.tur==="chiqim"?esc(KI.cat):KI.tur==="kirim"?"Kirim":"O\'tkazma")+'</div>'
+    +'<div style="font-family:var(--mono);font-size:26px;font-weight:700;color:'
+    +(KI.sum?(KI.tur==="kirim"?c("mint"):c("coral")):c("dim"))+'">'+(KI.sum?fmt(KI.sum):"0")+'</div></div>';
+
+  /* raqam paneli */
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px">';
+  ["1","2","3","4","5","6","7","8","9","000","0","←"].forEach(function(d){
+    h+='<button onclick="kiritRaqam(\''+d+'\')" style="background:var(--card2);color:var(--txt);'
+      +'padding:15px 0;font-size:18px;font-weight:600">'+d+'</button>';
+  });
+  h+='</div>';
+
+  h+='<div class="chips">';
+  [[10000,"+10k"],[50000,"+50k"],[100000,"+100k"],[1000000,"+1 mln"]].forEach(function(x){
+    h+='<button onclick="KI.sum+='+x[0]+';render()">'+x[1]+'</button>';
+  });
+  h+='<button onclick="KI.sum=0;render()" style="flex:0 0 46px;color:var(--coral)">C</button></div>';
+
+  h+='<button class="btn" style="background:'+(KI.tur==="kirim"?c("mint"):c("amber"))+'" onclick="kiritSaqla()">Saqlash</button>';
+  h+='</div>';
+
+  if(tezLst.length){
+    h+='<div class="card"><div class="lbl"><span>Tez-tez</span><b>bir bosishda</b></div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    tezLst.forEach(function(x){
+      h+='<button onclick="tezYoz(\''+x.cat.replace(/'/g,"\\'")+'\',\''+x.kassa+'\','+x.sum+')" '
+        +'style="flex:1 1 106px;background:var(--card2);border-radius:13px;padding:10px;text-align:left;color:var(--txt)">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">'+ico(x.cat,ccol(x.cat),14)
+        +'<span style="font-size:9.5px;color:var(--mute)">'+esc(x.cat)+'</span></div>'
+        +'<div style="font-family:var(--mono);font-size:13px">'+fmt(x.sum)+'</div></button>';
+    });
+    h+='</div></div>';
+  }
+
+  h+='<div class="card"><div class="lbl"><span>Oxirgi yozuvlar</span></div>';
+  (D.Yozuv||[]).slice().reverse().slice(0,8).forEach(function(e){
+    h+='<div class="row"><span style="font-family:var(--mono);font-size:9.5px;color:var(--dim);min-width:34px">'+String(e.sana).slice(5,10)+'</span>'
+      +'<span class="tag" style="background:'+(KCOL[e.kassa]||c("dim"))+'">'+String(e.kassa||"?").slice(0,3)+'</span>'
+      +'<span style="flex:1;color:var(--mute);font-size:10.5px">'+esc(e.cat||e.tur)+'</span>'
+      +'<span style="font-family:var(--mono);font-size:11px;color:'+(e.tur==="kirim"?c("mint"):e.tur==="transfer"?c("lav"):c("coral"))+'">'
+      +(e.tur==="kirim"?"+":e.tur==="transfer"?"→":"−")+fmt(e.summa)+'</span>'
+      +'<button class="btn2" style="padding:2px 7px;font-size:11px" onclick="ochir(\'Yozuv\',\''+e.id+'\')">×</button></div>';
+  });
+  return h+'</div>';
+}
+
+function kiritRaqam(d){
+  if(d==="←"){KI.sum=Math.floor(KI.sum/10)}
+  else if(d==="000"){KI.sum=KI.sum*1000}
+  else{KI.sum=KI.sum*10+Number(d)}
+  if(KI.sum>1e12)KI.sum=1e12;
+  render();
+}
+function kiritSaqla(){
+  if(!KI.sum){belgi("summa yo'q");return}
+  var o={sana:bugun(),tur:KI.tur,kassa:KI.kassa,
+    kassaTo:KI.tur==="transfer"?(KI.kassa==="Karta"?"Shaxsiy":"Karta"):"",
+    summa:KI.sum,cat:KI.tur==="chiqim"?KI.cat:"",objId:"",izoh:""};
+  KI.sum=0;
+  qosh("Yozuv",o);
+}
+function tezYoz(cat,kassa,sum){
+  qosh("Yozuv",{sana:bugun(),tur:"chiqim",kassa:kassa,kassaTo:"",summa:sum,cat:cat,objId:"",izoh:""});
+}
+
 function ekranSozla(m){
   var h='<div class="card"><div class="lbl"><span>Joriy qoldiq</span><b>to\'g\'rilash</b></div>'
     +'<p style="font-size:11px;color:var(--dim);line-height:1.5;margin:0 0 10px">Botga ham yozsangiz bo\'ladi: "kartada 5527658 bor"</p>';
@@ -699,7 +832,7 @@ function qoldiqSet(k,t){
 function qayta(){document.getElementById("app").innerHTML='<div class="load">Yuklanyapti…</div>';yukla().then(render).catch(xatoKor)}
 
 /* ═════ RENDER ═════ */
-var TABS=[["bugun","Bugun"],["pul","Pul"],["kitob","Kitob"],["hayot","Hayot"],["maqsad","Maqsad"],["sozla","Sozlash"]];
+var TABS=[["bugun","Bugun"],["kirit","Kirit"],["pul","Pul"],["kitob","Kitob"],["maqsad","Maqsad"],["sozla","Sozlash"]];
 function render(){
   CH=[];
   var m=hisob();
@@ -707,17 +840,80 @@ function render(){
   var h='<div class="top"><div><div class="brand">MFB · Mening hayotim</div><h1>'+nomi+'</h1></div>'
     +'<div class="meta">'+bugun()+'<div id="holat" style="color:'+c("mint")+'">'+esc(holat)+'</div></div></div>';
   if(tab==="bugun")h+=ekranBugun(m);
+  if(tab==="kirit")h+=ekranKirit(m);
   if(tab==="pul")h+=ekranPul(m);
   if(tab==="kitob")h+=ekranKitob(m);
-  if(tab==="hayot")h+=ekranHayot(m);
   if(tab==="maqsad")h+=ekranMaqsad(m);
   if(tab==="sozla")h+=ekranSozla(m);
-  document.getElementById("app").innerHTML=h;
+  document.getElementById("app").innerHTML=h+modalHTML(m);
   document.getElementById("nav").innerHTML=TABS.map(function(t){
     return '<button class="'+(tab===t[0]?"on":"")+'" onclick="tab=\''+t[0]+'\';render();window.scrollTo(0,0)"><i></i>'+t[1]+'</button>';
   }).join("");
   setTimeout(chizGrafik,30);
 }
+function modalYop(){MODAL=null;render()}
+function modalOch(nom){MODAL=nom;render();window.scrollTo(0,0)}
+
+function modalHTML(m){
+  if(!MODAL)return "";
+  var t="",h="";
+  if(MODAL==="qarz"){
+    t="Tarqatuvchi qarzi";
+    var T=D.Tarqatuvchi||[];
+    var bosh=T.filter(function(x){return x.tur==="boshlangich"});
+    var yangi=T.filter(function(x){return x.tur!=="boshlangich"&&x.tur!=="tolov"});
+    var tol=T.filter(function(x){return x.tur==="tolov"});
+    var tolJ=tol.reduce(function(a,x){return a+n(x.summa)},0);
+    h+='<div class="lbl"><span>Qarz qanday shakllangan</span></div>';
+    bosh.forEach(function(x){
+      h+=qator("Boshlang\'ich qarz",esc(x.izoh||String(x.sana).slice(0,10)),n(x.summa),c("amber"));
+    });
+    yangi.forEach(function(x){
+      h+=qator(esc(x.izoh||"Yangi tovar"),String(x.sana).slice(5,10),n(x.summa),c("coral"));
+    });
+    h+='<div style="height:9px"></div>';
+    h+=qator("To\'langan",tol.length+" ta to\'lov",-tolJ,c("mint"));
+    h+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline">'
+      +'<span style="font-size:13px">Qoldiq qarz</span>'
+      +'<span style="font-family:var(--mono);font-size:19px;font-weight:700;color:'+c("amber")+'">'+fmt(m.dist.qarz)+'</span></div>';
+    h+='<div style="margin-top:10px;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:10px;color:var(--mute);margin-bottom:5px">Shundan</div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">'
+      +'<span>Tovar bilan qoplangan</span><span style="font-family:var(--mono)">'+fmt(m.ombor)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:11.5px">'
+      +'<span style="color:'+c("coral")+'">Sof pul qarzi</span>'
+      +'<span style="font-family:var(--mono);color:'+c("coral")+'">'+fmt(m.dist.qarz-m.ombor)+'</span></div></div>';
+  }
+  if(MODAL==="ombor"){
+    t="Tarqatuvchidagi ombor";
+    var lst=m.kitob.filter(function(b){return b.qoldiq>0&&b.dist>0})
+      .map(function(b){return{nom:b.nom,soni:b.qoldiq,narx:b.dist,summa:b.qoldiq*b.dist}})
+      .sort(function(a,b2){return b2.summa-a.summa});
+    h+='<div class="lbl"><span>Sotilmagan nusxalar</span><b>'+mln(m.ombor)+' mln</b></div>';
+    lst.forEach(function(x,i){
+      var col=PALITRA[i%PALITRA.length];
+      h+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px">'
+        +'<span style="font-family:var(--disp);font-size:14px">'+esc(x.nom)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:13px;color:'+col+'">'+fmt(x.summa)+'</span></div>'
+        +'<div class="bar" style="height:5px"><div style="width:'+(x.summa/m.ombor*100)+'%;background:'+col+'"></div></div>'
+        +'<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px">'
+        +fmt(x.soni)+' nusxa \u00d7 '+fmt(x.narx)+'</div></div>';
+    });
+  }
+  return '<div class="ovl" onclick="modalYop()"><div class="sheet" onclick="event.stopPropagation()">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    +'<span style="font-family:var(--disp);font-size:19px">'+t+'</span>'
+    +'<button class="btn2" style="padding:7px 13px" onclick="modalYop()">Yopish</button></div>'+h+'</div></div>';
+}
+function qator(nom,izoh,summa,col){
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--card2)">'
+    +'<div><div style="font-size:12px">'+nom+'</div>'
+    +(izoh?'<div style="font-size:9px;color:var(--dim);margin-top:2px">'+izoh+'</div>':'')+'</div>'
+    +'<span style="font-family:var(--mono);font-size:12.5px;color:'+col+';white-space:nowrap">'
+    +(summa<0?"\u2212":"+")+fmt(Math.abs(summa))+'</span></div>';
+}
+
 function xatoKor(e){
   document.getElementById("app").innerHTML='<div class="card"><div class="lbl"><span>Xato</span></div>'
     +'<p style="font-size:12px;color:'+c("coral")+';line-height:1.5">'+esc(String(e))+'</p>'
