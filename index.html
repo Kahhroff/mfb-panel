@@ -237,7 +237,10 @@ function hisob(){
     var xar=pre+chop;
     var sot=n(bk.s50)+n(bk.s60),tus=n(bk.s50)*n(bk.dist)+n(bk.s60)*n(bk.retail);
     var fk=nrmk(bk.nom);
-    var foiz=(FOIZ[fk]===undefined?8:FOIZ[fk]), roy=tus*foiz/100;
+    var foiz=8;
+    if(bk.foiz!==undefined&&bk.foiz!==""&&!isNaN(Number(bk.foiz))) foiz=Number(bk.foiz);
+    else if(FOIZ[fk]!==undefined) foiz=FOIZ[fk];
+    var roy=tus*foiz/100;
     return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:tiraj,qoldiq:n(bk.qoldiq),
       dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:roy,foiz:foiz,
       tirajlar:trj,narxsiz:narxsiz,sof:tus-xar-roy,
@@ -315,6 +318,38 @@ function hisob(){
     }
     m.hor.push({d:d,K:v.Karta,H:v.Hisob,S:v.Shaxsiy});
   }
+  var joriyOy=bugun().slice(0,7);
+  var o=new Date(bugun()); o.setMonth(o.getMonth()-1);
+  var otganOy=o.toISOString().slice(0,7);
+  m.oy={joriy:joriyOy,otgan:otganOy};
+
+  function oyGuruh(tur,oy){
+    var g={},j=0;
+    Y.forEach(function(x){
+      if(x.tur!==tur)return;
+      if(String(x.sana).slice(0,7)!==oy)return;
+      var k=x.cat||x.izoh||(tur==="kirim"?"Boshqa kirim":"Boshqa");
+      g[k]=(g[k]||0)+n(x.summa); j+=n(x.summa);
+    });
+    return {lst:Object.keys(g).map(function(k){return{n:k,v:g[k]}}).sort(function(a,b2){return b2.v-a.v}),jami:j};
+  }
+  m.kirimOy={joriy:oyGuruh("kirim",joriyOy),otgan:oyGuruh("kirim",otganOy)};
+  m.chiqimOy={joriy:oyGuruh("chiqim",joriyOy),otgan:oyGuruh("chiqim",otganOy)};
+
+  /* draw harakatlari */
+  function drawOy(oy){
+    var g={},j=0;
+    Y.forEach(function(x){
+      if(x.tur!=="transfer")return;
+      if(oy&&String(x.sana).slice(0,7)!==oy)return;
+      var k=(KNOM[x.kassa]||x.kassa)+" → "+(KNOM[x.kassaTo]||x.kassaTo);
+      g[k]=(g[k]||0)+n(x.summa); j+=n(x.summa);
+    });
+    return {lst:Object.keys(g).map(function(k){return{n:k,v:g[k]}}).sort(function(a,b2){return b2.v-a.v}),jami:j};
+  }
+  m.draw={joriy:drawOy(joriyOy),otgan:drawOy(otganOy),hammasi:drawOy(null)};
+  m.drawRoyxat=Y.filter(function(x){return x.tur==="transfer"}).slice(-40).reverse();
+
   m.oxirgi=Y.length?Y.map(function(x){return x.sana}).sort().slice(-1)[0]:null;
   return m;
 }
@@ -518,6 +553,13 @@ function ekranPul(m){
     +'</div>';
 
   h+='<div class="card"><div class="lbl"><span>Kirim / chiqim · 30 kun</span></div>'+chartSm("g2",optBar(m))+'</div>';
+
+  if(m.draw.hammasi.jami>0){
+    h+='<div class="kpi tap" onclick="modalOch(\'draw\')" style="margin-bottom:10px">'
+      +'<div class="k">Hisoblararo o\'tkazma (draw)</div>'
+      +'<div class="v" style="color:'+c("lav")+'">'+mln(m.draw.joriy.jami)+' <span style="font-size:9px;color:var(--dim)">mln bu oy</span></div>'
+      +'<div class="s">o\'tgan oy '+mln(m.draw.otgan.jami)+' mln · tafsilot uchun bosing</div></div>';
+  }
 
   if(m.kirTaq.length){
     var RANG=[c("mint"),c("sky"),c("lav"),c("amber"),c("rose"),c("coral")];
@@ -893,6 +935,59 @@ function modalHTML(m){
       +'<div style="display:flex;justify-content:space-between;font-size:11.5px">'
       +'<span style="color:'+c("coral")+'">Sof pul qarzi</span>'
       +'<span style="font-family:var(--mono);color:'+c("coral")+'">'+fmt(m.dist.qarz-m.ombor)+'</span></div></div>';
+  }
+  function oyJadval(joriy,otgan,rang){
+    var q='<div style="display:flex;gap:8px;margin-bottom:12px">'
+      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:9px;color:var(--mute)">Bu oy</div>'
+      +'<div style="font-family:var(--mono);font-size:17px;font-weight:700;color:'+rang+'">'+mln(joriy.jami)+'</div></div>'
+      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:9px;color:var(--mute)">O\'tgan oy</div>'
+      +'<div style="font-family:var(--mono);font-size:17px;font-weight:700;color:var(--dim)">'+mln(otgan.jami)+'</div></div></div>';
+    var barcha={};
+    joriy.lst.forEach(function(x){barcha[x.n]={j:x.v,o:0}});
+    otgan.lst.forEach(function(x){if(barcha[x.n])barcha[x.n].o=x.v;else barcha[x.n]={j:0,o:x.v}});
+    var lst=Object.keys(barcha).map(function(k){return{n:k,j:barcha[k].j,o:barcha[k].o}})
+      .sort(function(a,b2){return (b2.j+b2.o)-(a.j+a.o)});
+    var mx=Math.max(1,joriy.jami,otgan.jami);
+    lst.forEach(function(x,i){
+      var col=PALITRA[i%PALITRA.length];
+      var farq=x.o?Math.round((x.j-x.o)/x.o*100):null;
+      q+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px">'
+        +'<span style="font-size:12.5px">'+esc(x.n)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:12.5px;color:'+col+'">'+fmt(x.j)+'</span></div>'
+        +'<div class="bar" style="height:5px;margin-bottom:3px"><div style="width:'+(x.j/mx*100)+'%;background:'+col+'"></div></div>'
+        +'<div class="bar" style="height:3px"><div style="width:'+(x.o/mx*100)+'%;background:var(--card3)"></div></div>'
+        +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:4px">o\'tgan oy '+fmt(x.o)
+        +(farq!==null&&farq!==0?' · '+(farq>0?"+":"")+farq+'%':'')+'</div></div>';
+    });
+    return q;
+  }
+
+  if(MODAL==="kirimDetal"){
+    t="Kirim manbalari";
+    h+=oyJadval(m.kirimOy.joriy,m.kirimOy.otgan,c("mint"));
+  }
+  if(MODAL==="chiqimDetal"){
+    t="Xarajat manbalari";
+    h+=oyJadval(m.chiqimOy.joriy,m.chiqimOy.otgan,c("coral"));
+  }
+  if(MODAL==="draw"){
+    t="Hisoblararo o'tkazma";
+    h+='<p style="font-size:11px;color:var(--dim);line-height:1.5;margin:0 0 12px">'
+      +'Nashriyot puli ro\'zg\'orga yoki shaxsiy pul nashriyotga o\'tganda yoziladi.</p>';
+    h+=oyJadval(m.draw.joriy,m.draw.otgan,c("lav"));
+    if(m.drawRoyxat.length){
+      h+='<div class="lbl" style="margin-top:16px"><span>Oxirgi o\'tkazmalar</span></div>';
+      m.drawRoyxat.slice(0,20).forEach(function(x){
+        h+='<div class="row"><span style="font-family:var(--mono);font-size:9.5px;color:var(--dim);min-width:34px">'
+          +String(x.sana).slice(5,10)+'</span>'
+          +'<span style="flex:1;font-size:11px;color:var(--mute)">'+(KNOM[x.kassa]||x.kassa)+' → '+(KNOM[x.kassaTo]||x.kassaTo)
+          +(x.izoh?' · '+esc(String(x.izoh).replace("draw · ","")):'')+'</span>'
+          +'<span style="font-family:var(--mono);font-size:11px;color:'+c("lav")+'">'+fmt(x.summa)+'</span></div>';
+      });
+    }
   }
   if(MODAL==="muzlagan"){
     t="Muzlagan kapital";
