@@ -217,7 +217,11 @@ function hisob(){
 
   function nrmk(x){return String(x||"").trim().toLowerCase().replace(/['\u2018\u2019]/g,"")}
   var FOIZ={};
-  (D.KitobFoiz||[]).forEach(function(r){if(r.kitob)FOIZ[nrmk(r.kitob)]=n(r.foiz)||8});
+  (D.KitobFoiz||[]).forEach(function(r){
+    if(!r.kitob)return;
+    var v=Number(r.foiz);
+    if(!isNaN(v))FOIZ[nrmk(r.kitob)]=v;
+  });
   m.kitob=K.map(function(bk){
     var pre=n(bk.huquq)+n(bk.tarjima)+n(bk.tahrir)+n(bk.korrektura)+n(bk.dizayn)+n(bk.smm);
     var trj=(D.Tiraj||[]).filter(function(t){return nrmk(t.kitob)===nrmk(bk.nom)})
@@ -232,7 +236,8 @@ function hisob(){
     else{tiraj=n(bk.tiraj);chop=n(bk.chopDona)*tiraj;jT=tiraj;jC=chop}
     var xar=pre+chop;
     var sot=n(bk.s50)+n(bk.s60),tus=n(bk.s50)*n(bk.dist)+n(bk.s60)*n(bk.retail);
-    var foiz=FOIZ[nrmk(bk.nom)]||8, roy=tus*foiz/100;
+    var fk=nrmk(bk.nom);
+    var foiz=(FOIZ[fk]===undefined?8:FOIZ[fk]), roy=tus*foiz/100;
     return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:tiraj,qoldiq:n(bk.qoldiq),
       dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:roy,foiz:foiz,
       tirajlar:trj,narxsiz:narxsiz,sof:tus-xar-roy,
@@ -622,8 +627,13 @@ function ekranKitob(m){
   h+='</div></div>';
 
   h+='<div class="grid" style="margin-bottom:10px">'
-    +kpi("Muzlagan kapital",mln(m.muzlagan),"mln",c("coral"),"tugallanmagan kitoblarda")
-    +kpi("Royalty hisoblangan",mln(m.kitob.reduce(function(a,x){return a+x.roy},0)),"mln","","")+'</div>';
+    +'<div class="kpi tap" onclick="modalOch(\'muzlagan\')"><div class="k">Muzlagan kapital</div>'
+    +'<div class="v" style="color:'+c("coral")+'">'+mln(m.muzlagan)+' <span style="font-size:9px;color:var(--dim)">mln</span></div>'
+    +'<div class="s">tugallanmagan kitoblarda</div></div>'
+    +'<div class="kpi tap" onclick="modalOch(\'royalty\')"><div class="k">Royalty hisoblangan</div>'
+    +'<div class="v">'+mln(m.kitob.reduce(function(a,x){return a+x.roy},0))+' <span style="font-size:9px;color:var(--dim)">mln</span></div>'
+    +'<div class="s">tafsilot uchun bosing</div></div>'
+    +'</div>';
 
   h+='<div class="card"><div class="lbl"><span>Kitob foydasi</span><b>mln so\'m</b></div>'+chart("g4",optKitob(m))+'</div>';
 
@@ -883,6 +893,67 @@ function modalHTML(m){
       +'<div style="display:flex;justify-content:space-between;font-size:11.5px">'
       +'<span style="color:'+c("coral")+'">Sof pul qarzi</span>'
       +'<span style="font-family:var(--mono);color:'+c("coral")+'">'+fmt(m.dist.qarz-m.ombor)+'</span></div></div>';
+  }
+  if(MODAL==="muzlagan"){
+    t="Muzlagan kapital";
+    var lst2=m.kitob.filter(function(b){return b.holat!=="Savdoda"})
+      .map(function(b){return{nom:b.nom,holat:b.holat,izoh:b.izoh,sarf:b.pre-b.qoldiqTolov,pre:b.pre,qarz:b.qoldiqTolov}})
+      .filter(function(x){return x.sarf>0}).sort(function(a,b2){return b2.sarf-a.sarf});
+    h+='<div class="lbl"><span>Tugallanmagan kitoblarda</span><b>'+mln(m.muzlagan)+' mln</b></div>'
+      +'<p style="font-size:11px;color:var(--dim);line-height:1.5;margin:0 0 12px">Sarflangan, lekin hali savdoga chiqmagan pul.</p>';
+    lst2.forEach(function(x,i){
+      var col=PALITRA[i%PALITRA.length];
+      h+='<div style="padding:11px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">'
+        +'<span style="font-family:var(--disp);font-size:14.5px">'+esc(x.nom)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:13px;color:'+col+'">'+fmt(x.sarf)+'</span></div>'
+        +'<div class="bar" style="height:5px"><div style="width:'+(x.sarf/m.muzlagan*100)+'%;background:'+col+'"></div></div>'
+        +'<div style="font-size:9.5px;color:var(--dim);margin-top:4px">'+esc(x.holat||"")
+        +(x.qarz?' · to\'lanmagan '+fmt(x.qarz):'')+'</div></div>';
+    });
+    h+='<div style="margin-top:12px;background:var(--card2);border-radius:12px;padding:12px;font-size:11.5px;line-height:1.5;color:var(--mute)">'
+      +'Bu pul chop etilgunicha qaytmaydi. Bitta kitobni tugatish yangisini boshlashdan foydaliroq.</div>';
+  }
+  if(MODAL==="royalty"){
+    t="Royalty";
+    var rl=m.kitob.filter(function(b){return b.roy>0||b.foiz>0})
+      .map(function(b){return{nom:b.nom,foiz:b.foiz,tus:b.tus,roy:b.roy,sot:b.sot,tirajlar:b.tirajlar}})
+      .sort(function(a,b2){return b2.roy-a.roy});
+    var jamiR=rl.reduce(function(a,x){return a+x.roy},0);
+    h+='<div class="lbl"><span>Kitob bo\'yicha</span><b>'+mln(jamiR)+' mln</b></div>';
+    rl.forEach(function(x,i){
+      if(!x.roy){
+        h+='<div style="padding:9px 0;border-bottom:1px solid var(--card2);display:flex;justify-content:space-between">'
+          +'<span style="font-family:var(--disp);font-size:14px">'+esc(x.nom)+'</span>'
+          +'<span style="font-family:var(--mono);font-size:11px;color:'+c("mint")+'">royalty yo\'q</span></div>';
+        return;
+      }
+      var col=PALITRA[i%PALITRA.length];
+      h+='<div style="padding:11px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">'
+        +'<span style="font-family:var(--disp);font-size:14.5px">'+esc(x.nom)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:13px;color:'+col+'">'+fmt(x.roy)+'</span></div>'
+        +'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim)">'
+        +fmt(x.sot)+' nusxa · tushum '+mln(x.tus)+' mln · '+x.foiz+'%</div></div>';
+    });
+    /* huquq majburiyatlari */
+    var hq=m.ob.filter(function(o){return o.tur==="Huquq"||/royalty|muallif/i.test(o.kim)});
+    if(hq.length){
+      h+='<div class="lbl" style="margin-top:16px"><span>To\'lov majburiyatlari</span></div>';
+      hq.sort(function(a,b2){return new Date(a.sana)-new Date(b2.sana)}).forEach(function(o){
+        var dd=kunTo(o.sana);
+        h+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
+          +'<div style="display:flex;justify-content:space-between;gap:8px">'
+          +'<span style="font-size:12.5px">'+esc(o.kim)+'</span>'
+          +'<span style="font-family:var(--mono);font-size:12.5px;color:'+(dd<0?c("coral"):c("amber"))+'">'+fmt(o.qoldiq)+'</span></div>'
+          +'<div style="font-family:var(--mono);font-size:9px;color:'+(dd<0?c("coral"):c("dim"))+';margin-top:3px">'
+          +o.sana+' · '+(dd<0?(-dd)+" kun kechikdi":dd+" kun")
+          +(o.tol?' · to\'langan '+fmt(o.tol):'')+'</div></div>';
+      });
+    }
+    h+='<div style="margin-top:12px;background:var(--card2);border-radius:12px;padding:12px;font-size:11.5px;line-height:1.5;color:var(--mute)">'
+      +'Royalty sotilgan nusxadan hisoblanadi. Tarqatuvchi to\'lamagan nusxalar uchun pul hali kelmagan — '
+      +'lekin muallif oldidagi majburiyat allaqachon yuzaga kelgan.</div>';
   }
   if(MODAL==="ombor"){
     t="Tarqatuvchidagi ombor";
