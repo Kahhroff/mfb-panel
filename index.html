@@ -834,6 +834,11 @@ function ekranKirit(m){
   });
   h+='<button onclick="KI.sum=0;render()" style="flex:0 0 46px;color:var(--coral)">C</button></div>';
 
+  if(KI.tur==="chiqim"){
+    var dwp=drawKerakP(KI.cat,KI.kassa);
+    if(dwp)h+='<div style="font-size:10.5px;color:'+c("lav")+';margin-bottom:8px;text-align:center">'
+      +'draw: '+KNOM[KI.kassa]+' → '+KNOM[dwp]+'</div>';
+  }
   h+='<button class="btn" style="background:'+(KI.tur==="kirim"?c("mint"):c("amber"))+'" onclick="kiritSaqla()">Saqlash</button>';
   h+='</div>';
 
@@ -862,6 +867,44 @@ function ekranKirit(m){
   return h+'</div>';
 }
 
+/* Kategoriya guruhi — Kategoriya varag'idan */
+function guruhOl(cat){
+  if(SHAX.indexOf(cat)>=0)return "Shaxsiy";
+  if(NASHR.indexOf(cat)>=0)return "Nashriyot";
+  var g="";
+  (D.Kategoriya||[]).forEach(function(r){
+    if(r.nom&&String(r.nom).toLowerCase().replace(/['\u2018\u2019]/g,"")===String(cat).toLowerCase().replace(/['\u2018\u2019]/g,""))
+      g=String(r.guruh||"").trim();
+  });
+  return g;
+}
+function drawKerakP(cat,kassa){
+  var g=guruhOl(cat);
+  if(g==="Shaxsiy"&&(kassa==="Karta"||kassa==="Hisob"))return "Shaxsiy";
+  if(g==="Nashriyot"&&kassa==="Shaxsiy")return "Karta";
+  return null;
+}
+
+/* Chiqimni draw bilan yozish */
+function chiqimYoz(cat,kassa,sum,izoh){
+  var dw=drawKerakP(cat,kassa);
+  belgi("saqlanyapti…");
+  var zanjir=Promise.resolve();
+  if(dw){
+    zanjir=api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:bugun(),tur:"transfer",
+      kassa:kassa,kassaTo:dw,summa:sum,cat:"",objId:"",izoh:"draw · "+cat})})
+      .then(function(j){if(j.ok){if(!D.Yozuv)D.Yozuv=[];D.Yozuv.push(j.obj)}});
+    kassa=dw;
+  }
+  return zanjir.then(function(){
+    return api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:bugun(),tur:"chiqim",
+      kassa:kassa,kassaTo:"",summa:sum,cat:cat,objId:"",izoh:izoh||""})});
+  }).then(function(j){
+    if(j.ok){D.Yozuv.push(j.obj);belgi(dw?"saqlandi · draw":"saqlandi");render()}
+    else belgi("xato: "+j.xato);
+  }).catch(function(){belgi("ulanmadi")});
+}
+
 function kiritRaqam(d){
   if(d==="←"){KI.sum=Math.floor(KI.sum/10)}
   else if(d==="000"){KI.sum=KI.sum*1000}
@@ -871,15 +914,14 @@ function kiritRaqam(d){
 }
 function kiritSaqla(){
   if(!KI.sum){belgi("summa yo'q");return}
-  var o={sana:bugun(),tur:KI.tur,kassa:KI.kassa,
-    kassaTo:KI.tur==="transfer"?(KI.kassa==="Karta"?"Shaxsiy":"Karta"):"",
-    summa:KI.sum,cat:KI.tur==="chiqim"?KI.cat:"",objId:"",izoh:""};
+  var sum=KI.sum, cat=KI.cat, kassa=KI.kassa, tur=KI.tur;
   KI.sum=0;
-  qosh("Yozuv",o);
+  if(tur==="chiqim"){ chiqimYoz(cat,kassa,sum,""); return; }
+  qosh("Yozuv",{sana:bugun(),tur:tur,kassa:kassa,
+    kassaTo:tur==="transfer"?(kassa==="Karta"?"Shaxsiy":"Karta"):"",
+    summa:sum,cat:tur==="kirim"?cat:"",objId:"",izoh:""});
 }
-function tezYoz(cat,kassa,sum){
-  qosh("Yozuv",{sana:bugun(),tur:"chiqim",kassa:kassa,kassaTo:"",summa:sum,cat:cat,objId:"",izoh:""});
-}
+function tezYoz(cat,kassa,sum){ chiqimYoz(cat,kassa,sum,""); }
 
 function ekranSozla(m){
   var h='<div class="card"><div class="lbl"><span>Joriy qoldiq</span><b>to\'g\'rilash</b></div>'
