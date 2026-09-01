@@ -86,7 +86,13 @@ var MAXFIY="ram5657";
 
 var D=null, tab="bugun", holat="", CH=[];
 var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",sum:0,izoh:""};
-var MODAL=null;
+var MODAL=null, MOY=0;
+function oyKey(off){var d=new Date(bugun());d.setDate(1);d.setMonth(d.getMonth()-(off||0));return d.toISOString().slice(0,7)}
+function oyNom(off){
+  var A=["Yanvar","Fevral","Mart","Aprel","May","Iyun","Iyul","Avgust","Sentabr","Oktabr","Noyabr","Dekabr"];
+  var d=new Date(bugun());d.setDate(1);d.setMonth(d.getMonth()-(off||0));
+  return A[d.getMonth()]+" "+d.getFullYear();
+}
 var CATS=["Korzinka","Kommunal","Ayolimga","Qizim","Ota-ona","Transport","Sog'liq","Sadaqa","Qarz to'lovi","Bosmaxona","Tarjimon","Tahrir","Korrektura","Dizayn","Royalty","SMM","Xodim","Zaxira","Boshqa"];
 var SHAX=["Korzinka","Kommunal","Ayolimga","Qizim","Ota-ona","Transport","Sog'liq","Sadaqa"];
 var NASHR=["Bosmaxona","Tarjimon","Tahrir","Korrektura","Dizayn","Royalty","SMM","Xodim"];
@@ -265,9 +271,11 @@ function hisob(){
   m.qarz.oyQ=oq;m.qarz.temp=oq?m.qarz.qoldiq/oq:null;
 
   function nrm(t){return String(t||"").trim().toLowerCase().replace(/['\u2018\u2019]/g,"")}
+  var joriyOyK=bugun().slice(0,7);
   var kir={},kirNom={};
   Y.forEach(function(x){
     if(x.tur!=="kirim")return;
+    if(String(x.sana).slice(0,7)!==joriyOyK)return;
     var xom=x.cat||x.izoh||"Boshqa kirim";
     var k=nrm(xom);
     /* imlo farqi bo'lgan nomlarni birlashtirish */
@@ -289,11 +297,11 @@ function hisob(){
   m.kirTaq=Object.keys(kir).map(function(k){return{n:kirNom[k]||k,v:kir[k],c:ccol(k)}}).sort(function(a,b2){return b2.v-a.v});
   m.kirJ=m.kirTaq.reduce(function(a,x){return a+x.v},0);
   var kirKas={};
-  Y.forEach(function(x){if(x.tur==="kirim"){kirKas[x.kassa]=(kirKas[x.kassa]||0)+n(x.summa)}});
+  Y.forEach(function(x){if(x.tur==="kirim"&&String(x.sana).slice(0,7)===joriyOyK){kirKas[x.kassa]=(kirKas[x.kassa]||0)+n(x.summa)}});
   m.kirKassa=KAS.filter(function(k){return kirKas[k]>0}).map(function(k){return{n:KNOM[k],v:kirKas[k],c:KCOL[k]}});
 
   var kats={};
-  Y.forEach(function(x){if(x.tur==="chiqim"&&x.cat){kats[x.cat]=(kats[x.cat]||0)+n(x.summa)}});
+  Y.forEach(function(x){if(x.tur==="chiqim"&&x.cat&&String(x.sana).slice(0,7)===joriyOyK){kats[x.cat]=(kats[x.cat]||0)+n(x.summa)}});
   m.xar=Object.keys(kats).map(function(k){return{n:k,v:kats[k],c:ccol(k)}}).sort(function(a,b2){return b2.v-a.v});
   m.xarJ=m.xar.reduce(function(a,x){return a+x.v},0);
   function katGuruh(nom){
@@ -322,6 +330,19 @@ function hisob(){
   var o=new Date(bugun()); o.setMonth(o.getMonth()-1);
   var otganOy=o.toISOString().slice(0,7);
   m.oy={joriy:joriyOy,otgan:otganOy};
+
+  m.oyGuruh=function(tur,oy,filtr){
+    var g={},j=0;
+    Y.forEach(function(x){
+      if(x.tur!==tur)return;
+      if(String(x.sana).slice(0,7)!==oy)return;
+      if(filtr&&!filtr(x))return;
+      var k=x.cat||x.izoh||(tur==="kirim"?"Boshqa kirim":"Boshqa");
+      g[k]=(g[k]||0)+n(x.summa); j+=n(x.summa);
+    });
+    return {lst:Object.keys(g).map(function(k){return{n:k,v:g[k]}}).sort(function(a,b2){return b2.v-a.v}),jami:j};
+  };
+  m.guruhNomi=guruh;
 
   function oyGuruh(tur,oy){
     var g={},j=0;
@@ -575,10 +596,12 @@ function ekranPul(m){
     });
     if(m.kirKassa.length>1){
       h+='<div style="display:flex;gap:7px;margin-top:9px">';
-      m.kirKassa.forEach(function(x){
-        h+='<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px">'
-          +'<div style="font-size:9px;color:var(--mute)">'+x.n+'</div>'
-          +'<div style="font-family:var(--mono);font-size:14px;color:'+x.c+'">'+mln(x.v)+'</div></div>';
+      KAS.forEach(function(kk){
+        var v=0;
+        (D.Yozuv||[]).forEach(function(y2){if(y2.tur==="kirim"&&y2.kassa===kk&&String(y2.sana).slice(0,7)===bugun().slice(0,7))v+=n(y2.summa)});
+        h+='<div class="tap" onclick="modalOch(\'kir_'+kk+'\')" style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px">'
+          +'<div style="font-size:9px;color:var(--mute)">'+KNOM[kk]+'</div>'
+          +'<div style="font-family:var(--mono);font-size:14px;color:'+KCOL[kk]+'">'+mln(v)+'</div></div>';
       });
       h+='</div>';
     }
@@ -589,8 +612,8 @@ function ekranPul(m){
     h+='<div class="card"><div class="lbl"><span>Xarajat taqsimoti</span><b>'+mln(m.xarJ)+' mln</b></div>'
       +chart("g3",optDonut(m))
       +'<div style="display:flex;gap:7px;margin-top:8px">'
-      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Ro\'zg\'or</div><div style="font-family:var(--mono);font-size:15px;color:'+c("lav")+'">'+mln(m.xarShax)+'</div></div>'
-      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Nashriyot</div><div style="font-family:var(--mono);font-size:15px;color:'+c("amber")+'">'+mln(m.xarNashr)+'</div></div></div>';
+      +'<div class="tap" onclick="modalOch(\'guruh_Shaxsiy\')" style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Ro\'zg\'or</div><div style="font-family:var(--mono);font-size:15px;color:'+c("lav")+'">'+mln(m.xarShax)+'</div></div>'
+      +'<div class="tap" onclick="modalOch(\'guruh_Nashriyot\')" style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Nashriyot</div><div style="font-family:var(--mono);font-size:15px;color:'+c("amber")+'">'+mln(m.xarNashr)+'</div></div></div>';
     m.xar.forEach(function(x,i){
       var xc=PALITRA[i%PALITRA.length];
       h+='<div class="row"><span class="ico">'+ico(x.n,xc,15)+'</span><div style="flex:1">'
@@ -904,7 +927,7 @@ function render(){
   setTimeout(chizGrafik,30);
 }
 function modalYop(){MODAL=null;render()}
-function modalOch(nom){MODAL=nom;render();window.scrollTo(0,0)}
+function modalOch(nom){MODAL=nom;MOY=0;render();window.scrollTo(0,0)}
 
 function modalHTML(m){
   if(!MODAL)return "";
@@ -936,6 +959,30 @@ function modalHTML(m){
       +'<span style="color:'+c("coral")+'">Sof pul qarzi</span>'
       +'<span style="font-family:var(--mono);color:'+c("coral")+'">'+fmt(m.dist.qarz-m.ombor)+'</span></div></div>';
   }
+  function oyBoshi(){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">'
+      +'<button class="btn2" style="padding:8px 13px" onclick="MOY++;render()">‹</button>'
+      +'<span style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)">'+oyNom(MOY)+'</span>'
+      +'<button class="btn2" style="padding:8px 13px;opacity:'+(MOY?1:.3)+'" '
+      +(MOY?'onclick="MOY--;render()"':'')+'>›</button></div>';
+  }
+  function oyRoyxat(g,rang){
+    if(!g.lst.length)return '<p style="font-size:12px;color:var(--dim);text-align:center;padding:20px 0">Bu oyda yozuv yo\'q</p>';
+    var q='<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px;text-align:center">'
+      +'<div style="font-family:var(--mono);font-size:24px;font-weight:700;color:'+rang+'">'+fmt(g.jami)+'</div></div>';
+    g.lst.forEach(function(x,i){
+      var col=PALITRA[i%PALITRA.length];
+      q+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:5px">'
+        +'<span style="font-size:12.5px">'+esc(x.n)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:12.5px;color:'+col+'">'+fmt(x.v)+'</span></div>'
+        +'<div class="bar" style="height:5px"><div style="width:'+(x.v/Math.max(1,g.jami)*100)+'%;background:'+col+'"></div></div>'
+        +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:3px">'
+        +Math.round(x.v/Math.max(1,g.jami)*100)+'%</div></div>';
+    });
+    return q;
+  }
+
   function oyJadval(joriy,otgan,rang){
     var q='<div style="display:flex;gap:8px;margin-bottom:12px">'
       +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
@@ -967,17 +1014,36 @@ function modalHTML(m){
 
   if(MODAL==="kirimDetal"){
     t="Kirim manbalari";
-    h+=oyJadval(m.kirimOy.joriy,m.kirimOy.otgan,c("mint"));
+    h+=oyBoshi()+oyRoyxat(m.oyGuruh("kirim",oyKey(MOY)),c("mint"));
   }
   if(MODAL==="chiqimDetal"){
     t="Xarajat manbalari";
-    h+=oyJadval(m.chiqimOy.joriy,m.chiqimOy.otgan,c("coral"));
+    h+=oyBoshi()+oyRoyxat(m.oyGuruh("chiqim",oyKey(MOY)),c("coral"));
+  }
+  if(MODAL&&MODAL.indexOf("kir_")===0){
+    var kk=MODAL.slice(4);
+    t="Kirim · "+(KNOM[kk]||kk);
+    h+=oyBoshi()+oyRoyxat(m.oyGuruh("kirim",oyKey(MOY),function(x){return x.kassa===kk}),KCOL[kk]||c("mint"));
+  }
+  if(MODAL&&MODAL.indexOf("guruh_")===0){
+    var gr=MODAL.slice(6);
+    t=gr==="Shaxsiy"?"Ro'zg'or xarajatlari":"Nashriyot xarajatlari";
+    h+=oyBoshi()+oyRoyxat(m.oyGuruh("chiqim",oyKey(MOY),function(x){return m.guruhNomi(x.cat)===gr}),
+      gr==="Shaxsiy"?c("lav"):c("amber"));
   }
   if(MODAL==="draw"){
     t="Hisoblararo o'tkazma";
     h+='<p style="font-size:11px;color:var(--dim);line-height:1.5;margin:0 0 12px">'
       +'Nashriyot puli ro\'zg\'orga yoki shaxsiy pul nashriyotga o\'tganda yoziladi.</p>';
-    h+=oyJadval(m.draw.joriy,m.draw.otgan,c("lav"));
+    var dg={},dj=0;
+    (D.Yozuv||[]).forEach(function(x){
+      if(x.tur!=="transfer")return;
+      if(String(x.sana).slice(0,7)!==oyKey(MOY))return;
+      var k=(KNOM[x.kassa]||x.kassa)+" → "+(KNOM[x.kassaTo]||x.kassaTo);
+      dg[k]=(dg[k]||0)+n(x.summa); dj+=n(x.summa);
+    });
+    h+=oyBoshi()+oyRoyxat({lst:Object.keys(dg).map(function(k){return{n:k,v:dg[k]}})
+      .sort(function(a,b2){return b2.v-a.v}),jami:dj},c("lav"));
     if(m.drawRoyxat.length){
       h+='<div class="lbl" style="margin-top:16px"><span>Oxirgi o\'tkazmalar</span></div>';
       m.drawRoyxat.slice(0,20).forEach(function(x){
