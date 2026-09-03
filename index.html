@@ -86,7 +86,7 @@ var MAXFIY="ram5657";
 
 var D=null, tab="bugun", holat="", CH=[];
 var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",sum:0,izoh:""};
-var MODAL=null, MOY=0;
+var MODAL=null, MOY=0, FMAJ_REJIM="bir";
 function oyKey(off){var d=new Date(bugun());d.setDate(1);d.setMonth(d.getMonth()-(off||0));return d.toISOString().slice(0,7)}
 function oyNom(off){
   var A=["Yanvar","Fevral","Mart","Aprel","May","Iyun","Iyul","Avgust","Sentabr","Oktabr","Noyabr","Dekabr"];
@@ -111,7 +111,11 @@ function rangOl(nom){
   if(!_RANG[nom]){_RANG[nom]=PALITRA[_RI%PALITRA.length];_RI++}
   return _RANG[nom];
 }
-function ccol(x){return CCOL[x]||rangOl(x)}
+function ccol(x){
+  var k=ikonaTop(x);
+  if(CCOL[k]&&k!=="Boshqa")return CCOL[k];
+  return CCOL[x]||rangOl(x);
+}
 
 function n(v){var x=Number(v);return isNaN(x)?0:x}
 function fmt(v){return isNaN(v)||v===null?"—":Math.round(v).toLocaleString("ru-RU").replace(/,/g," ")}
@@ -144,9 +148,36 @@ var ICO={
  Kirim:'<path d="M12 20V5M7 10l5-5 5 5"/>',
  Tarqatuvchi:'<rect x="3" y="9" width="12" height="8" rx="1"/><path d="M15 12h3l3 3v2h-6"/><circle cx="7" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>',
  Boshqa:'<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>'};
+function ikonaTop(nom){
+  if(ICO[nom])return nom;
+  var l=String(nom||"").toLowerCase();
+  if(/taksi|transport|yo'l|benzin|avto|mashina/.test(l))return "Transport";
+  if(/ovqat|restoran|kafe|non|market|do'kon|dokon/.test(l))return "Korzinka";
+  if(/dori|shifokor|sog'liq|sogliq|tibbiy/.test(l))return "Sog'liq";
+  if(/svet|gaz|suv|kommunal|internet|aloqa/.test(l))return "Kommunal";
+  if(/xodim|ish haqi|oylik|maosh/.test(l))return "Xodim";
+  if(/bosma|chop|tipograf/.test(l))return "Bosmaxona";
+  if(/tarjim/.test(l))return "Tarjimon";
+  if(/tahrir|muharrir/.test(l))return "Tahrir";
+  if(/korrektura|korrektor/.test(l))return "Korrektura";
+  if(/dizayn|muqova|maket/.test(l))return "Dizayn";
+  if(/royalty|muallif/.test(l))return "Royalty";
+  if(/smm|reklama|marketing/.test(l))return "SMM";
+  if(/zaxira|jamg'arma|jamgarma/.test(l))return "Zaxira";
+  if(/sadaqa|xayriya|ehson/.test(l))return "Sadaqa";
+  if(/\bqarz\b/.test(l))return "Qarz to'lovi";
+  if(/ayol|xotin/.test(l))return "Ayolimga";
+  if(/qiz|bola|pampers/.test(l))return "Qizim";
+  if(/cloud|obuna|subscription|dastur|hosting|domen|server/.test(l))return "Dastur";
+  if(/tarqatuvchi/.test(l))return "Tarqatuvchi";
+  return "Boshqa";
+}
+var ICO_QOSH={Dastur:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 4v5"/>'};
 function ico(nom,col,sz){
+ var k=ikonaTop(nom);
+ var yol=ICO[k]||ICO_QOSH[k]||ICO.Boshqa;
  return '<svg width="'+(sz||16)+'" height="'+(sz||16)+'" viewBox="0 0 24 24" fill="none" stroke="'+(col||c("mute"))
-  +'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICO[nom]||ICO.Boshqa)+'</svg>';
+  +'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+yol+'</svg>';
 }
 
 /* ═════ SERVER ═════ */
@@ -639,6 +670,7 @@ function ekranPul(m){
       +(dd<0?(-dd)+" kun kechikdi":dd+" kun")+' · to\'langan '+mln(o.tol)+' / '+mln(o.summa)
       +'</div></div>';
   });
+  h+='<button class="btn2" style="width:100%;margin-top:6px" onclick="modalOch(\'majburiyatYangi\')">+ Yangi majburiyat</button>';
   h+='</div>';
 
   if(m.qarz.jami){
@@ -713,9 +745,9 @@ function ekranKitob(m){
   });
   h+='</div>';
 
-  h+='<div class="card"><div class="lbl"><span>Kitob P&L</span></div>';
+  h+='<div class="card"><div class="lbl"><span>Kitob P&L</span><b style="cursor:pointer" onclick="modalOch(\'kitobYangi\')">+ Yangi</b></div>';
   m.kitob.forEach(function(b2){
-    h+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
+    h+='<div onclick="modalOch(\'kitob_'+b2.id+'\')" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--card2)">'
       +'<div style="display:flex;justify-content:space-between;gap:8px">'
       +'<div><div style="font-family:var(--disp);font-size:15px">'+esc(b2.nom)+'</div>'
       +'<div style="font-size:9.5px;color:var(--dim);margin-top:3px">'+esc(b2.izoh||"")+'</div></div>'
@@ -811,6 +843,9 @@ function ekranKirit(m){
         +(on?col:"transparent")+';background:'+(on?"var(--card3)":"var(--card2)")+';color:'
         +(on?"var(--txt)":"var(--dim)")+'">'+ico(cn,on?col:c("dim"),17)+'<span>'+esc(cn)+'</span></button>';
     });
+    h+='<button onclick="modalOch(\'katYangi\')" style="border:1.5px dashed var(--dim);background:none;color:var(--dim)">'
+      +'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+      +'<span>Yangi</span></button>';
     h+='</div>';
   }
 
@@ -969,6 +1004,140 @@ function render(){
   setTimeout(chizGrafik,30);
 }
 function modalYop(){MODAL=null;render()}
+var FKAT_GURUH="Shaxsiy";
+function fKatGuruh(g){
+  FKAT_GURUH=g;
+  var a=document.getElementById("fKatG_Shaxsiy"), b=document.getElementById("fKatG_Nashriyot");
+  if(a&&b){
+    a.style.background=g==="Shaxsiy"?"var(--card3)":"var(--card2)";
+    a.style.color=g==="Shaxsiy"?c("lav"):"var(--mute)";
+    b.style.background=g==="Nashriyot"?"var(--card3)":"var(--card2)";
+    b.style.color=g==="Nashriyot"?c("amber"):"var(--mute)";
+  }
+}
+function kategoriyaSaqla(){
+  var nom=(document.getElementById("fKatNom").value||"").trim();
+  if(!nom){belgi("nom kiriting");return}
+  belgi("saqlanyapti…");
+  api({amal:"qosh",varaq:"Kategoriya",obj:JSON.stringify({nom:nom,guruh:FKAT_GURUH})}).then(function(j){
+    if(j.ok){ if(!D.Kategoriya)D.Kategoriya=[]; D.Kategoriya.push(j.obj);
+      KI.cat=nom; MODAL=null; belgi("yaratildi"); render(); }
+    else belgi("xato: "+j.xato);
+  }).catch(function(){belgi("ulanmadi")});
+}
+
+function majburiyatSaqla(){
+  var kim=(document.getElementById("fMajKim").value||"").trim();
+  var summa=Number(document.getElementById("fMajSumma").value)||0;
+  var sana=document.getElementById("fMajSana").value||bugun();
+  var tur=document.getElementById("fMajTur").value;
+  var manba=document.getElementById("fMajManba").value;
+  if(!kim||!summa){belgi("nom va summa kerak");return}
+  belgi("saqlanyapti…");
+  api({amal:"qosh",varaq:"Majburiyat",obj:JSON.stringify({kim:kim,summa:summa,sana:sana,tur:tur,manba:manba,tolangan:0,paid:false})})
+    .then(function(j){
+      if(j.ok){ if(!D.Majburiyat)D.Majburiyat=[]; D.Majburiyat.push(j.obj);
+        MODAL=null; belgi("yaratildi"); render(); }
+      else belgi("xato: "+j.xato);
+    }).catch(function(){belgi("ulanmadi")});
+}
+
+function kFV(id){ var e=document.getElementById(id); return e?(Number(e.value)||0):0; }
+
+function majburiyatTakrorSaqla(){
+  var kim=(document.getElementById("fMajKim").value||"").trim();
+  var summa=Number(document.getElementById("fMajSumma").value)||0;
+  var kunlar=(document.getElementById("fMajKunlar").value||"").split(",")
+    .map(function(x){return parseInt(x.trim())}).filter(function(x){return x>=1&&x<=28});
+  var oySoni=Number(document.getElementById("fMajOy").value)||6;
+  var tur=document.getElementById("fMajTur").value;
+  var manba=document.getElementById("fMajManba").value;
+  if(!kim||!summa||!kunlar.length){belgi("nom, summa va kunlarni to'ldiring");return}
+
+  var royxat=[];
+  var bugunD=new Date(bugun());
+  for(var o=0;o<oySoni;o++){
+    kunlar.forEach(function(kun){
+      var d=new Date(bugunD.getFullYear(),bugunD.getMonth()+o,kun);
+      if(d<bugunD)return;
+      var sana=d.toISOString().slice(0,10);
+      royxat.push({kim:kim+" · "+sana.slice(8,10)+"."+sana.slice(5,7),summa:summa,sana:sana,
+        tur:tur,manba:manba,tolangan:0,paid:false});
+    });
+  }
+  if(!royxat.length){belgi("bironta sana topilmadi");return}
+
+  belgi("saqlanyapti… 0/"+royxat.length);
+  var i=0;
+  function keyingi(){
+    if(i>=royxat.length){ MODAL=null; belgi("yaratildi: "+royxat.length+" ta"); render(); return; }
+    var o=royxat[i++];
+    api({amal:"qosh",varaq:"Majburiyat",obj:JSON.stringify(o)}).then(function(j){
+      if(j.ok){ if(!D.Majburiyat)D.Majburiyat=[]; D.Majburiyat.push(j.obj); }
+      belgi("saqlanyapti… "+i+"/"+royxat.length);
+      keyingi();
+    }).catch(function(){ keyingi(); });
+  }
+  keyingi();
+}
+function kitobYangiSaqla(){
+  var nom=(document.getElementById("fKNom").value||"").trim();
+  if(!nom){belgi("kitob nomini kiriting");return}
+  var obj={nom:nom,retail:kFV("fK_retail"),dist:kFV("fK_dist"),tiraj:kFV("fK_tiraj"),
+    s50:0,s60:0,qoldiq:kFV("fK_qoldiq"),chopDona:kFV("fK_chopDona"),
+    huquq:kFV("fK_huquq"),tarjima:kFV("fK_tarjima"),tahrir:kFV("fK_tahrir"),
+    korrektura:kFV("fK_korrektura"),dizayn:kFV("fK_dizayn"),smm:kFV("fK_smm"),
+    qoldiqTolov:0,holat:document.getElementById("fK_holat").value,
+    izoh:document.getElementById("fK_izoh").value||""};
+  belgi("saqlanyapti…");
+  api({amal:"qosh",varaq:"Kitob",obj:JSON.stringify(obj)}).then(function(j){
+    if(j.ok){
+      if(!D.Kitob)D.Kitob=[]; D.Kitob.push(j.obj);
+      var foiz=kFV("fK_foiz");
+      var davom=foiz?api({amal:"qosh",varaq:"KitobFoiz",obj:JSON.stringify({kitob:nom,foiz:foiz})})
+        .then(function(j2){if(j2.ok){if(!D.KitobFoiz)D.KitobFoiz=[];D.KitobFoiz.push(j2.obj)}}):Promise.resolve();
+      davom.then(function(){ MODAL=null; belgi("yaratildi"); render(); });
+    } else belgi("xato: "+j.xato);
+  }).catch(function(){belgi("ulanmadi")});
+}
+
+function kitobTahrirSaqla(){
+  var id=document.getElementById("fKId").value;
+  var maydonlar=["huquq","tarjima","tahrir","korrektura","dizayn","smm","retail","dist","tiraj","qoldiq","chopDona"];
+  belgi("saqlanyapti…");
+  var zanjir=Promise.resolve();
+  maydonlar.forEach(function(mf){
+    var v=kFV("fK_"+mf);
+    zanjir=zanjir.then(function(){
+      return api({amal:"yangila",varaq:"Kitob",id:id,maydon:mf,qiymat:v}).then(function(j){
+        if(j.ok){ (D.Kitob||[]).forEach(function(x){if(x.id===id)x[mf]=v}); }
+      });
+    });
+  });
+  var holat=document.getElementById("fK_holat").value;
+  var izoh=document.getElementById("fK_izoh").value||"";
+  zanjir=zanjir.then(function(){
+    return api({amal:"yangila",varaq:"Kitob",id:id,maydon:"holat",qiymat:holat}).then(function(j){
+      if(j.ok)(D.Kitob||[]).forEach(function(x){if(x.id===id)x.holat=holat});
+    });
+  }).then(function(){
+    return api({amal:"yangila",varaq:"Kitob",id:id,maydon:"izoh",qiymat:izoh}).then(function(j){
+      if(j.ok)(D.Kitob||[]).forEach(function(x){if(x.id===id)x.izoh=izoh});
+    });
+  });
+  var foizVal=kFV("fK_foiz");
+  var kitobNomi=""; (D.Kitob||[]).forEach(function(x){if(x.id===id)kitobNomi=x.nom});
+  zanjir=zanjir.then(function(){
+    return api({amal:"yangila",varaq:"Kitob",id:id,maydon:"foiz",qiymat:foizVal}).then(function(j){
+      if(!j.ok) return api({amal:"qosh",varaq:"KitobFoiz",obj:JSON.stringify({kitob:kitobNomi,foiz:foizVal})});
+      (D.Kitob||[]).forEach(function(x){if(x.id===id)x.foiz=foizVal});
+    }).catch(function(){});
+  });
+  zanjir.then(function(){ MODAL=null; belgi("saqlandi"); render(); })
+    .catch(function(){ belgi("qisman saqlandi"); render(); });
+}
+
+
 function modalOch(nom){MODAL=nom;MOY=0;render();window.scrollTo(0,0)}
 
 function modalHTML(m){
@@ -1086,9 +1255,10 @@ function modalHTML(m){
     });
     h+=oyBoshi()+oyRoyxat({lst:Object.keys(dg).map(function(k){return{n:k,v:dg[k]}})
       .sort(function(a,b2){return b2.v-a.v}),jami:dj},c("lav"));
-    if(m.drawRoyxat.length){
-      h+='<div class="lbl" style="margin-top:16px"><span>Oxirgi o\'tkazmalar</span></div>';
-      m.drawRoyxat.slice(0,20).forEach(function(x){
+    var drOy=m.drawRoyxat.filter(function(x){return String(x.sana).slice(0,7)===oyKey(MOY)});
+    if(drOy.length){
+      h+='<div class="lbl" style="margin-top:16px"><span>'+oyNom(MOY)+' oyidagi o\'tkazmalar</span></div>';
+      drOy.slice(0,30).forEach(function(x){
         h+='<div class="row"><span style="font-family:var(--mono);font-size:9.5px;color:var(--dim);min-width:34px">'
           +String(x.sana).slice(5,10)+'</span>'
           +'<span style="flex:1;font-size:11px;color:var(--mute)">'+(KNOM[x.kassa]||x.kassa)+' → '+(KNOM[x.kassaTo]||x.kassaTo)
@@ -1097,6 +1267,80 @@ function modalHTML(m){
       });
     }
   }
+  if(MODAL==="katYangi"){
+    t="Yangi kategoriya";
+    h+='<label class="f">Nomi</label><input id="fKatNom" placeholder="masalan: Kir yuvish" style="margin-bottom:12px">'
+      +'<label class="f">Guruh</label><div class="acc" style="margin-bottom:14px">'
+      +'<button id="fKatG_Shaxsiy" onclick="fKatGuruh(\'Shaxsiy\')" style="background:var(--card3);color:'+c("lav")+'">Shaxsiy</button>'
+      +'<button id="fKatG_Nashriyot" onclick="fKatGuruh(\'Nashriyot\')" style="background:var(--card2);color:var(--mute)">Nashriyot</button>'
+      +'</div>'
+      +'<button class="btn" onclick="kategoriyaSaqla()">Yaratish</button>';
+  }
+
+  if(MODAL==="majburiyatYangi"){
+    t="Yangi majburiyat";
+    h+='<div class="pill">'
+      +'<button class="'+(FMAJ_REJIM==="bir"?"on":"")+'" onclick="FMAJ_REJIM=\'bir\';render()">Bir martalik</button>'
+      +'<button class="'+(FMAJ_REJIM==="takror"?"on":"")+'" onclick="FMAJ_REJIM=\'takror\';render()">Har oy takror</button>'
+      +'</div>';
+    h+='<div class="grid" style="margin-bottom:10px">'
+      +'<div style="grid-column:1/-1"><label class="f">Nomi</label><input id="fMajKim" placeholder="masalan: Bosmaxona — yangi qarz"></div>'
+      +'<div><label class="f">Summa, so\'m</label><input id="fMajSumma" inputmode="numeric" placeholder="0"></div>';
+    if(FMAJ_REJIM==="bir"){
+      h+='<div><label class="f">Muddat</label><input id="fMajSana" type="date" value="'+bugun()+'"></div>';
+    } else {
+      h+='<div><label class="f">Har oyning kunlari</label><input id="fMajKunlar" placeholder="masalan: 5, 20" value="5, 20"></div>'
+        +'<div><label class="f">Necha oy davomida</label><input id="fMajOy" inputmode="numeric" value="6"></div>';
+    }
+    h+='<div><label class="f">Turi</label><select id="fMajTur">'
+      +["Huquq","Ishlab chiqarish","Jamoa","Shaxsiy qarz","Boshqa"].map(function(x){return '<option>'+x+'</option>'}).join("")
+      +'</select></div>'
+      +'<div><label class="f">Qaysi hisobdan</label><select id="fMajManba">'
+      +KAS.map(function(k){return '<option value="'+k+'">'+KNOM[k]+'</option>'}).join("")
+      +'</select></div></div>';
+    if(FMAJ_REJIM==="takror")
+      h+='<p style="font-size:10.5px;color:var(--dim);line-height:1.5;margin:0 0 12px">Har oyning belgilangan kunlarida alohida majburiyat yaratiladi. Masalan "5, 20" va 6 oy — 12 ta to\'lov.</p>';
+    h+='<button class="btn" onclick="'+(FMAJ_REJIM==="takror"?"majburiyatTakrorSaqla()":"majburiyatSaqla()")+'">Yaratish</button>';
+  }
+
+  if(MODAL==="kitobYangi"||(MODAL&&MODAL.indexOf("kitob_")===0)){
+    var tahrirId=MODAL.indexOf("kitob_")===0?MODAL.slice(6):null;
+    var bk=tahrirId?m.kitob.filter(function(x){return x.id===tahrirId})[0]:null;
+    var bkXom=tahrirId?(D.Kitob||[]).filter(function(x){return x.id===tahrirId})[0]:null;
+    t=tahrirId?("Tahrirlash · "+(bk?bk.nom:"")):"Yangi kitob";
+    function fq(lbl,id,val,ph){
+      return '<div><label class="f">'+lbl+'</label><input id="'+id+'" inputmode="numeric" placeholder="'+(ph||"0")+'" value="'+(val!==undefined&&val!==null&&val!==""?val:"")+'"></div>';
+    }
+    if(!tahrirId){
+      h+='<label class="f">Kitob nomi</label><input id="fKNom" placeholder="masalan: Yangi roman" style="margin-bottom:12px">';
+    } else {
+      h+='<input type="hidden" id="fKId" value="'+tahrirId+'">';
+    }
+    h+='<div class="lbl" style="margin-top:4px"><span>Xarajatlar</span></div><div class="grid" style="margin-bottom:10px">'
+      +fq("Mualliflik huquqi","fK_huquq",bkXom?bkXom.huquq:"")
+      +fq("Tarjima","fK_tarjima",bkXom?bkXom.tarjima:"")
+      +fq("Tahrir","fK_tahrir",bkXom?bkXom.tahrir:"")
+      +fq("Korrektura","fK_korrektura",bkXom?bkXom.korrektura:"")
+      +fq("Dizayn","fK_dizayn",bkXom?bkXom.dizayn:"")
+      +fq("SMM","fK_smm",bkXom?bkXom.smm:"")
+      +'</div>'
+      +'<div class="lbl"><span>Sotuv</span></div><div class="grid" style="margin-bottom:10px">'
+      +fq("Retail narx","fK_retail",bkXom?bkXom.retail:"")
+      +fq("Ulgurji narx","fK_dist",bkXom?bkXom.dist:"")
+      +fq("Tiraj (jami)","fK_tiraj",bkXom?bkXom.tiraj:"")
+      +fq("Qoldiq (nusxa)","fK_qoldiq",bkXom?bkXom.qoldiq:"")
+      +fq("Chop narxi/dona","fK_chopDona",bkXom?bkXom.chopDona:"")
+      +'<div><label class="f">Royalty, %</label><input id="fK_foiz" inputmode="numeric" value="'
+      +(bkXom&&bkXom.foiz!==undefined&&bkXom.foiz!==""?bkXom.foiz:"8")+'"></div>'
+      +'</div>'
+      +'<div class="lbl"><span>Holat</span></div>'
+      +'<select id="fK_holat" style="margin-bottom:10px">'
+      +["Ishlab chiqarishda","Tayyor","Savdoda"].map(function(x){return '<option'+(bkXom&&bkXom.holat===x?" selected":"")+'>'+x+'</option>'}).join("")
+      +'</select>'
+      +'<label class="f">Izoh</label><input id="fK_izoh" value="'+esc(bkXom?bkXom.izoh||"":"")+'" style="margin-bottom:14px">'
+      +'<button class="btn" onclick="'+(tahrirId?"kitobTahrirSaqla()":"kitobYangiSaqla()")+'">'+(tahrirId?"Saqlash":"Yaratish")+'</button>';
+  }
+
   if(MODAL==="muzlagan"){
     t="Muzlagan kapital";
     var lst2=m.kitob.filter(function(b){return b.holat!=="Savdoda"})
