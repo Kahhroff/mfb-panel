@@ -85,7 +85,7 @@ var API="https://script.google.com/macros/s/AKfycby0AbDC_RZEFG_Six9rwGsWrRlHDWM1
 var MAXFIY="ram5657";
 
 var D=null, tab="bugun", holat="", CH=[];
-var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",sum:0,izoh:""};
+var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",manba:"",sum:0,izoh:""};
 var MODAL=null, MOY=0, FMAJ_REJIM="bir";
 function oyKey(off){var d=new Date(bugun());d.setDate(1);d.setMonth(d.getMonth()-(off||0));return d.toISOString().slice(0,7)}
 function oyNom(off){
@@ -848,6 +848,22 @@ function ekranKirit(m){
       +'<span>Yangi</span></button>';
     h+='</div>';
   }
+  if(KI.tur==="kirim"){
+    var manbalar={};
+    (D.Yozuv||[]).forEach(function(x){if(x.tur==="kirim"){var mn=x.cat||x.izoh;if(mn)manbalar[mn]=true}});
+    var manbaLst=Object.keys(manbalar);
+    if(!manbaLst.length) manbaLst=["Tarqatuvchi","Uzum","Universitet oyligi"];
+    h+='<label class="f">Manba</label>'
+      +'<input id="kiManba" value="'+esc(KI.manba)+'" placeholder="masalan: Tarqatuvchi" '
+      +'onchange="KI.manba=this.value" style="margin-bottom:9px">';
+    h+='<div class="chips" style="margin-bottom:2px">';
+    manbaLst.slice(0,6).forEach(function(mn){
+      h+='<button onclick="KI.manba=\''+String(mn).replace(/'/g,"\\'")+'\';render()" '
+        +'style="background:'+(KI.manba===mn?"var(--card3)":"var(--card2)")+';color:'+(KI.manba===mn?c("mint"):"var(--txt)")+'">'
+        +esc(mn)+'</button>';
+    });
+    h+='</div>';
+  }
 
   /* summa ko'rsatkichi */
   h+='<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px">'
@@ -952,9 +968,10 @@ function kiritSaqla(){
   var sum=KI.sum, cat=KI.cat, kassa=KI.kassa, tur=KI.tur;
   KI.sum=0;
   if(tur==="chiqim"){ chiqimYoz(cat,kassa,sum,""); return; }
+  var manba=(KI.manba||"").trim();
   qosh("Yozuv",{sana:bugun(),tur:tur,kassa:kassa,
     kassaTo:tur==="transfer"?(kassa==="Karta"?"Shaxsiy":"Karta"):"",
-    summa:sum,cat:tur==="kirim"?cat:"",objId:"",izoh:""});
+    summa:sum,cat:tur==="kirim"?manba:"",objId:"",izoh:""});
 }
 function tezYoz(cat,kassa,sum){ chiqimYoz(cat,kassa,sum,""); }
 
