@@ -1150,6 +1150,14 @@ function qoldiqSet(k,t){
     +Y.filter(function(x){return x.tur==="transfer"&&x.kassa===k}).reduce(function(a,x){return a+n(x.summa)},0);
   kassaBelgila(k,t-inn+out);
 }
+function takroriyTekshir(){
+  amal({amal:"takroriyTekshir"},"Tekshirildi").then(function(j){
+    if(j&&j.natija)belgi(String(j.natija).replace(/\n/g," · ").slice(0,80));
+  });
+}
+function majHammaHisobla(){
+  amal({amal:"hammaMajHisobla"},"Qayta hisoblandi");
+}
 function kursSaqla(){
   var v=kFV("fKurs");
   if(!v){belgi("kursni kiriting");return}
