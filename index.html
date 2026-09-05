@@ -85,7 +85,7 @@ var API="https://script.google.com/macros/s/AKfycby0AbDC_RZEFG_Six9rwGsWrRlHDWM1
 var MAXFIY="ram5657";
 
 var D=null, tab="bugun", holat="", CH=[];
-var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",manba:"",sum:0,izoh:""};
+var KI={tur:"chiqim",kassa:"Karta",cat:"Korzinka",manba:"",sum:0,izoh:"",sana:""};
 var MODAL=null, MOY=0, FMAJ_REJIM="bir", FTARQ="tolov";
 function oyKey(off){var d=new Date(bugun());d.setDate(1);d.setMonth(d.getMonth()-(off||0));return d.toISOString().slice(0,7)}
 function oyNom(off){
@@ -120,6 +120,7 @@ function ccol(x){
 function n(v){var x=Number(v);return isNaN(x)?0:x}
 function norm(x){return String(x==null?"":x).toLowerCase()
   .replace(/['\u2018\u2019\u02bb\u0027`]/g,"").replace(/\s+/g," ").trim()}
+function nrmk2(x){return norm(x)}
 function fmt(v){return isNaN(v)||v===null?"—":Math.round(v).toLocaleString("ru-RU").replace(/,/g," ")}
 function mln(v){return isNaN(v)||v===null?"—":(v/1e6).toFixed(1)}
 function bugun(){return new Date(Date.now()+5*36e5).toISOString().slice(0,10)}
@@ -171,10 +172,24 @@ function ikonaTop(nom){
   if(/ayol|xotin/.test(l))return "Ayolimga";
   if(/qiz|bola|pampers/.test(l))return "Qizim";
   if(/cloud|obuna|subscription|dastur|hosting|domen|server/.test(l))return "Dastur";
-  if(/tarqatuvchi/.test(l))return "Tarqatuvchi";
+  if(/tarqatuvchi|distributor/.test(l))return "Tarqatuvchi";
+  if(/do'kon|dokon|magazin/.test(l))return "Dokon";
+  if(/komissiya|komissya/.test(l))return "Komissiya";
+  if(/klient|mijoz|xaridor/.test(l))return "Klient";
+  if(/premya|premiya|bonus|mukofot/.test(l))return "Premya";
+  if(/soliq|keshbek|cashback/.test(l))return "Soliq";
+  if(/ovqatlan|restoran|kafe|tashqarida/.test(l))return "Ovqat";
   return "Boshqa";
 }
-var ICO_QOSH={Dastur:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 4v5"/>'};
+var ICO_QOSH={
+ Dastur:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 4v5"/>',
+ Dokon:'<path d="M4 7h16l-1 4H5L4 7z"/><path d="M5 11v9h14v-9"/><path d="M9 20v-5h6v5"/>',
+ Komissiya:'<circle cx="12" cy="12" r="9"/><path d="M9 9h6M9 15h6M12 7v10"/>',
+ Klient:'<circle cx="12" cy="8" r="3.5"/><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7"/>',
+ Premya:'<circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-2.5L17 21l-1.5-7.5"/>',
+ Soliq:'<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/>',
+ Ovqat:'<path d="M6 3v8a3 3 0 006 0V3M9 3v18"/><path d="M17 3c-1.5 2-2 4-2 6s.5 3 2 3v9"/>'
+};
 function ico(nom,col,sz){
  var k=ikonaTop(nom);
  var yol=ICO[k]||ICO_QOSH[k]||ICO.Boshqa;
@@ -289,7 +304,7 @@ function hisob(){
   m.dist={bosh:db,tol:dt,yangi:dy,qarz:db+dy-dt,foiz:db+dy?dt/(db+dy)*100:0,
     harakat:T.filter(function(x){return x.tur!=="boshlangich"})};
 
-  function nrmk(x){return String(x||"").trim().toLowerCase().replace(/['\u2018\u2019]/g,"")}
+  function nrmk(x){return norm(x)}
   var FOIZ={};
   (D.KitobFoiz||[]).forEach(function(r){
     if(!r.kitob)return;
@@ -315,9 +330,18 @@ function hisob(){
     if(bk.foiz!==undefined&&bk.foiz!==""&&!isNaN(Number(bk.foiz))) foiz=Number(bk.foiz);
     else if(FOIZ[fk]!==undefined) foiz=FOIZ[fk];
     var roy=tus*foiz/100;
+    /* to'langan royalty tarixi */
+    var royTol=0, royNusxa=0, royTarix=[];
+    (D.RoyaltyTolov||[]).forEach(function(r){
+      if(nrmk(r.kitob)!==fk)return;
+      royTol+=n(r.royaltySom); royNusxa+=n(r.nusxa); royTarix.push(r);
+    });
     return {id:bk.id,nom:bk.nom,holat:bk.holat,izoh:bk.izoh,tiraj:tiraj,qoldiq:n(bk.qoldiq),
       dist:n(bk.dist),retail:n(bk.retail),pre:pre,xar:xar,sot:sot,tus:tus,roy:roy,foiz:foiz,
       tirajlar:trj,narxsiz:narxsiz,sof:tus-xar-roy,
+      royTolangan:royTol,royQoldiq:Math.max(0,roy-royTol),
+      royNusxa:royNusxa,royQoldiqNusxa:Math.max(0,sot-royNusxa),royTarix:royTarix,
+      avansUsd:n(bk.avansUsd),
       tannarx:(jT&&narxsiz)?(jC/jT+(tiraj?pre/tiraj:0)):(tiraj?xar/tiraj:0),
       qoldiqTolov:n(bk.qoldiqTolov)};
   });
@@ -725,6 +749,19 @@ function ekranPul(m){
   h+='<button class="btn2" style="width:100%;margin-top:6px" onclick="modalOch(\'majburiyatYangi\')">+ Yangi majburiyat</button>';
   h+='</div>';
 
+  /* Kutilayotgan tushum */
+  h+='<div class="card"><div class="lbl"><span>Kutilayotgan tushum</span>'
+    +'<b style="cursor:pointer" onclick="modalOch(\'kutYangi\')">+ Yangi</b></div>';
+  if(!m.kut.length)h+='<p style="font-size:11px;color:var(--dim);margin:0">Kutilayotgan tushum yo\'q</p>';
+  m.kut.sort(function(a,b2){return new Date(a.sana)-new Date(b2.sana)}).forEach(function(k2){
+    var dd2=kunTo(k2.sana);
+    h+='<div class="row" style="cursor:pointer" onclick="modalOch(\'kut_'+k2.id+'\')">'
+      +'<span style="font-family:var(--mono);font-size:9.5px;color:var(--dim);min-width:34px">'+String(k2.sana).slice(5,10)+'</span>'
+      +'<span style="flex:1;font-size:11.5px">'+esc(k2.kim)+'</span>'
+      +'<span style="font-family:var(--mono);font-size:11.5px;color:'+c("mint")+'">'+fmt(n(k2.summa))+'</span></div>';
+  });
+  h+='</div>';
+
   if(m.qarz.jami){
     h+='<div class="card"><div class="lbl"><span>Ilhom aka</span><b>'+fmt(m.qarz.qoldiq)+'$ qoldiq</b></div>'
       +'<div style="height:22px;background:var(--bg);border-radius:11px;overflow:hidden;position:relative;margin-bottom:10px">'
@@ -880,6 +917,12 @@ function ekranKirit(m){
   });
   h+='</div>';
 
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">'
+    +'<label class="f" style="margin:0;flex:0 0 auto">Sana</label>'
+    +'<input type="date" value="'+(KI.sana||bugun())+'" onchange="KI.sana=this.value" '
+    +'style="flex:1;padding:8px 10px;font-size:12px">'
+    +(KI.sana&&KI.sana!==bugun()?'<button class="btn2" style="flex:0 0 auto;padding:8px 11px" onclick="KI.sana=\'\';render()">bugun</button>':'')
+    +'</div>';
   h+='<div class="acc" style="margin-bottom:10px">';
   KAS.forEach(function(k){
     var on=KI.kassa===k;
@@ -903,8 +946,13 @@ function ekranKirit(m){
   }
   if(KI.tur==="kirim"){
     var manbalar={};
-    (D.Yozuv||[]).forEach(function(x){if(x.tur==="kirim"){var mn=x.cat||x.izoh;if(mn)manbalar[mn]=true}});
-    var manbaLst=Object.keys(manbalar);
+    (D.Yozuv||[]).forEach(function(x){
+      if(x.tur!=="kirim")return;
+      var mn=x.cat||x.izoh; if(!mn)return;
+      var k=norm(mn);
+      if(!manbalar[k])manbalar[k]=String(mn).trim();
+    });
+    var manbaLst=Object.keys(manbalar).map(function(k){return manbalar[k]});
     if(!manbaLst.length) manbaLst=["Tarqatuvchi","Uzum","Universitet oyligi"];
     h+='<label class="f">Manba</label>'
       +'<input id="kiManba" value="'+esc(KI.manba)+'" placeholder="masalan: Tarqatuvchi" '
@@ -991,18 +1039,19 @@ function drawKerakP(cat,kassa){
 }
 
 /* Chiqimni draw bilan yozish */
-function chiqimYoz(cat,kassa,sum,izoh){
+function chiqimYoz(cat,kassa,sum,izoh,sana){
+  sana=sana||bugun();
   var dw=drawKerakP(cat,kassa);
   belgi("saqlanyapti…");
   var zanjir=Promise.resolve();
   if(dw){
-    zanjir=api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:bugun(),tur:"transfer",
+    zanjir=api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:sana,tur:"transfer",
       kassa:kassa,kassaTo:dw,summa:sum,cat:"",objId:"",izoh:"draw · "+cat})})
       .then(function(j){if(j.ok){if(!D.Yozuv)D.Yozuv=[];D.Yozuv.push(j.obj)}});
     kassa=dw;
   }
   return zanjir.then(function(){
-    return api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:bugun(),tur:"chiqim",
+    return api({amal:"qosh",varaq:"Yozuv",obj:JSON.stringify({sana:sana,tur:"chiqim",
       kassa:kassa,kassaTo:"",summa:sum,cat:cat,objId:"",izoh:izoh||""})});
   }).then(function(j){
     if(j.ok){D.Yozuv.push(j.obj);belgi(dw?"saqlandi · draw":"saqlandi");render()}
@@ -1021,13 +1070,18 @@ function kiritSaqla(){
   if(!KI.sum){belgi("summa yo'q");return}
   var sum=KI.sum, cat=KI.cat, kassa=KI.kassa, tur=KI.tur;
   KI.sum=0;
-  if(tur==="chiqim"){ chiqimYoz(cat,kassa,sum,""); return; }
+  if(tur==="chiqim"){ chiqimYoz(cat,kassa,sum,"",KI.sana||bugun()); return; }
   var manba=(KI.manba||"").trim();
-  qosh("Yozuv",{sana:bugun(),tur:tur,kassa:kassa,
+  var sana=KI.sana||bugun();
+  /* Tarqatuvchidan kirim \u2014 qarzi ham kamayadi */
+  if(tur==="kirim"&&norm(manba)==="tarqatuvchi"){
+    amal({amal:"tarqTolov",summa:sum,kassa:kassa,sana:sana}); return;
+  }
+  qosh("Yozuv",{sana:sana,tur:tur,kassa:kassa,
     kassaTo:tur==="transfer"?(kassa==="Karta"?"Shaxsiy":"Karta"):"",
     summa:sum,cat:tur==="kirim"?manba:"",objId:"",izoh:""});
 }
-function tezYoz(cat,kassa,sum){ chiqimYoz(cat,kassa,sum,""); }
+function tezYoz(cat,kassa,sum){ chiqimYoz(cat,kassa,sum,"",KI.sana||bugun()); }
 
 function ekranSozla(m){
   var h='<div class="card"><div class="lbl"><span>Joriy qoldiq</span><b>to\'g\'rilash</b></div>'
@@ -1077,7 +1131,7 @@ function kunlikSaqla(){
 function qayta(){document.getElementById("app").innerHTML='<div class="load">Yuklanyapti…</div>';yukla().then(render).catch(xatoKor)}
 
 /* ═════ RENDER ═════ */
-var TABS=[["bugun","Bugun"],["kirit","Kirit"],["pul","Pul"],["kitob","Kitob"],["maqsad","Maqsad"],["sozla","Sozlash"]];
+var TABS=[["bugun","Bugun"],["kirit","Kirit"],["pul","Pul"],["kitob","Kitob"],["sozla","Sozlash"]];
 function render(){
   CH=[];
   var m=hisob();
@@ -1088,7 +1142,6 @@ function render(){
   if(tab==="kirit")h+=ekranKirit(m);
   if(tab==="pul")h+=ekranPul(m);
   if(tab==="kitob")h+=ekranKitob(m);
-  if(tab==="maqsad")h+=ekranMaqsad(m);
   if(tab==="sozla")h+=ekranSozla(m);
   document.getElementById("app").innerHTML=h+modalHTML(m);
   document.getElementById("nav").innerHTML=TABS.map(function(t){
@@ -1183,6 +1236,63 @@ function majOchir(id){
   amal({amal:"ochir",varaq:"Majburiyat",id:id}).then(function(){MODAL=null;render()});
 }
 
+/* ── Kitob o'chirish ── */
+function kitobOchir(id){
+  amal({amal:"ochir",varaq:"Kitob",id:id}).then(function(){MODAL=null;render()});
+}
+
+/* ── Tarqatuvchi harakati ── */
+function tarqTahrirSaqla(){
+  var id=sFV("fTQId");
+  var obj={sana:sFV("fTQ_sana"),summa:kFV("fTQ_summa"),tur:sFV("fTQ_tur"),
+    nusxa:kFV("fTQ_nusxa"),izoh:sFV("fTQ_izoh")};
+  amal({amal:"yangilaKop",varaq:"Tarqatuvchi",id:id,obj:JSON.stringify(obj)})
+    .then(function(){MODAL=null;render()});
+}
+function tarqOchir(id){
+  amal({amal:"ochir",varaq:"Tarqatuvchi",id:id}).then(function(){MODAL=null;render()});
+}
+
+/* ── Tiraj ── */
+function tirajSaqla(){
+  var id=sFV("fTRId");
+  var obj={kitob:sFV("fTRKitob"),raqam:kFV("fTR_raqam"),nusxa:kFV("fTR_nusxa"),
+    narxDona:kFV("fTR_narx"),tur:sFV("fTR_tur"),sana:sFV("fTR_sana"),holat:sFV("fTR_holat"),izoh:""};
+  if(!obj.kitob||!obj.nusxa){belgi("kitob va nusxa kerak");return}
+  if(id) amal({amal:"yangilaKop",varaq:"Tiraj",id:id,obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+  else amal({amal:"qosh",varaq:"Tiraj",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+}
+function tirajOchir(id){
+  amal({amal:"ochir",varaq:"Tiraj",id:id}).then(function(){MODAL=null;render()});
+}
+
+/* ── Kutilayotgan tushum ── */
+function kutSaqla(){
+  var id=sFV("fKTId");
+  var obj={kim:sFV("fKT_kim"),summa:kFV("fKT_summa"),sana:sFV("fKT_sana"),paid:false};
+  if(!obj.kim||!obj.summa){belgi("nom va summa kerak");return}
+  if(id) amal({amal:"yangilaKop",varaq:"Kutilayotgan",id:id,obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+  else amal({amal:"qosh",varaq:"Kutilayotgan",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+}
+function kutOchir(id){
+  amal({amal:"ochir",varaq:"Kutilayotgan",id:id}).then(function(){MODAL=null;render()});
+}
+
+/* ── Royalty to'lovi ── */
+function royaltyTolovSaqla(){
+  var id=sFV("fRId");
+  var kb=(D.Kitob||[]).filter(function(x){return String(x.id)===id})[0];
+  if(!kb){belgi("kitob topilmadi");return}
+  var obj={kitob:kb.nom,sana:sFV("fR_sana"),davr:sFV("fR_davr"),
+    nusxa:kFV("fR_nusxa"),tushumSom:kFV("fR_tushum"),
+    foiz:Number(kb.foiz)||8,royaltySom:kFV("fR_royaltySom"),
+    hisobotKurs:kFV("fR_hisobotKurs"),avansUsd:kFV("fR_avans"),
+    kurs:kFV("fR_kurs"),tolanganSom:kFV("fR_tolanganSom"),
+    komissiya:kFV("fR_kom"),kassa:sFV("fR_kassa"),komissiyaKassa:sFV("fR_kassa")};
+  if(!obj.royaltySom){belgi("royalty summasini kiriting");return}
+  amal({amal:"royaltyTolov",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+}
+
 /* ── Tarqatuvchi amallari ── */
 function tarqSaqla(rejim){
   if(rejim==="tolov"){
@@ -1236,27 +1346,26 @@ function majburiyatTakrorSaqla(){
 function kitobYangiSaqla(){
   var nom=(document.getElementById("fKNom").value||"").trim();
   if(!nom){belgi("kitob nomini kiriting");return}
-  var obj={nom:nom,retail:kFV("fK_retail"),dist:kFV("fK_dist"),tiraj:kFV("fK_tiraj"),
+  var obj={nom:nom,foiz:kFV("fK_foiz"),retail:kFV("fK_retail"),dist:kFV("fK_dist"),tiraj:kFV("fK_tiraj"),
     s50:0,s60:0,qoldiq:kFV("fK_qoldiq"),chopDona:kFV("fK_chopDona"),
     huquq:kFV("fK_huquq"),tarjima:kFV("fK_tarjima"),tahrir:kFV("fK_tahrir"),
     korrektura:kFV("fK_korrektura"),dizayn:kFV("fK_dizayn"),smm:kFV("fK_smm"),
-    qoldiqTolov:0,holat:document.getElementById("fK_holat").value,
+    avansUsd:kFV("fK_avansUsd"),qoldiqTolov:0,holat:document.getElementById("fK_holat").value,
     izoh:document.getElementById("fK_izoh").value||""};
   belgi("saqlanyapti…");
   api({amal:"qosh",varaq:"Kitob",obj:JSON.stringify(obj)}).then(function(j){
     if(j.ok){
       if(!D.Kitob)D.Kitob=[]; D.Kitob.push(j.obj);
       var foiz=kFV("fK_foiz");
-      var davom=foiz?api({amal:"qosh",varaq:"KitobFoiz",obj:JSON.stringify({kitob:nom,foiz:foiz})})
-        .then(function(j2){if(j2.ok){if(!D.KitobFoiz)D.KitobFoiz=[];D.KitobFoiz.push(j2.obj)}}):Promise.resolve();
-      davom.then(function(){ MODAL=null; belgi("yaratildi"); render(); });
+      var davom=foiz?api({amal:"yangila",varaq:"Kitob",id:j.obj.id,maydon:"foiz",qiymat:foiz}):Promise.resolve();
+      davom.then(function(){ MODAL=null; belgi("yaratildi"); yukla().then(render); });
     } else belgi("xato: "+j.xato);
   }).catch(function(){belgi("ulanmadi")});
 }
 
 function kitobTahrirSaqla(){
   var id=document.getElementById("fKId").value;
-  var maydonlar=["huquq","tarjima","tahrir","korrektura","dizayn","smm","retail","dist","tiraj","qoldiq","chopDona"];
+  var maydonlar=["huquq","tarjima","tahrir","korrektura","dizayn","smm","retail","dist","tiraj","qoldiq","chopDona","avansUsd"];
   belgi("saqlanyapti…");
   var zanjir=Promise.resolve();
   maydonlar.forEach(function(mf){
@@ -1282,7 +1391,6 @@ function kitobTahrirSaqla(){
   var kitobNomi=""; (D.Kitob||[]).forEach(function(x){if(x.id===id)kitobNomi=x.nom});
   zanjir=zanjir.then(function(){
     return api({amal:"yangila",varaq:"Kitob",id:id,maydon:"foiz",qiymat:foizVal}).then(function(j){
-      if(!j.ok) return api({amal:"qosh",varaq:"KitobFoiz",obj:JSON.stringify({kitob:kitobNomi,foiz:foizVal})});
       (D.Kitob||[]).forEach(function(x){if(x.id===id)x.foiz=foizVal});
     }).catch(function(){});
   });
@@ -1524,6 +1632,76 @@ function modalHTML(m){
     }
   }
 
+  /* ── TARQATUVCHI HARAKATINI TAHRIRLASH ── */
+  if(MODAL&&MODAL.indexOf("tarq_")===0){
+    var tqid=MODAL.slice(5);
+    var tq=(D.Tarqatuvchi||[]).filter(function(x){return String(x.id)===tqid})[0];
+    if(tq){
+      t="Tarqatuvchi harakati";
+      h+='<input type="hidden" id="fTQId" value="'+tqid+'">'
+        +'<div class="grid" style="margin-bottom:10px">'
+        +'<div><label class="f">Sana</label><input id="fTQ_sana" type="date" value="'+String(tq.sana).slice(0,10)+'"></div>'
+        +'<div><label class="f">Summa</label><input id="fTQ_summa" inputmode="numeric" value="'+n(tq.summa)+'"></div>'
+        +'<div><label class="f">Turi</label><select id="fTQ_tur">'
+        +[["tolov","To\'lov (qarz kamayadi)"],["yangi","Yangi (qarz oshadi)"],["boshlangich","Boshlang\'ich"]]
+          .map(function(x){return '<option value="'+x[0]+'"'+(tq.tur===x[0]?" selected":"")+'>'+x[1]+'</option>'}).join("")
+        +'</select></div>'
+        +'<div><label class="f">Nusxa</label><input id="fTQ_nusxa" inputmode="numeric" value="'+(n(tq.nusxa)||"")+'"></div>'
+        +'<div style="grid-column:1/-1"><label class="f">Izoh</label><input id="fTQ_izoh" value="'+esc(tq.izoh||"")+'"></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<button class="btn" onclick="tarqTahrirSaqla()">Saqlash</button>'
+        +'<button class="btn2" style="flex:0 0 90px" onclick="tarqOchir(\''+tqid+'\')">O\'chirish</button></div>';
+    }
+  }
+
+  /* ── TIRAJ ── */
+  if(MODAL&&(MODAL.indexOf("tiraj_")===0||MODAL.indexOf("tirajYangi_")===0)){
+    var yangiT=MODAL.indexOf("tirajYangi_")===0;
+    var trId=yangiT?null:MODAL.slice(6);
+    var kbId=yangiT?MODAL.slice(11):null;
+    var tr3=trId?(D.Tiraj||[]).filter(function(x){return String(x.id)===trId})[0]:null;
+    var kbT3=kbId?(D.Kitob||[]).filter(function(x){return String(x.id)===kbId})[0]
+                 :(tr3?(D.Kitob||[]).filter(function(x){return nrmk2(x.nom)===nrmk2(tr3.kitob)})[0]:null);
+    t=yangiT?"Yangi tiraj":"Tirajni tahrirlash";
+    h+='<input type="hidden" id="fTRId" value="'+(trId||"")+'">'
+      +'<input type="hidden" id="fTRKitob" value="'+esc(kbT3?kbT3.nom:(tr3?tr3.kitob:""))+'">'
+      +'<div style="background:var(--card2);border-radius:12px;padding:11px;margin-bottom:12px;font-size:12px">'
+      +esc(kbT3?kbT3.nom:(tr3?tr3.kitob:""))+'</div>'
+      +'<div class="grid" style="margin-bottom:10px">'
+      +'<div><label class="f">Tiraj raqami</label><input id="fTR_raqam" inputmode="numeric" value="'+(tr3?n(tr3.raqam):"")+'"></div>'
+      +'<div><label class="f">Nusxa</label><input id="fTR_nusxa" inputmode="numeric" value="'+(tr3?n(tr3.nusxa):"")+'"></div>'
+      +'<div><label class="f">Narx/dona</label><input id="fTR_narx" inputmode="numeric" value="'+(tr3?n(tr3.narxDona):"")+'"></div>'
+      +'<div><label class="f">To\'lov turi</label><select id="fTR_tur">'
+      +["naqd","bank"].map(function(x){return '<option'+(tr3&&tr3.tur===x?" selected":"")+'>'+x+'</option>'}).join("")
+      +'</select></div>'
+      +'<div><label class="f">Sana</label><input id="fTR_sana" type="date" value="'+(tr3?String(tr3.sana).slice(0,10):bugun())+'"></div>'
+      +'<div><label class="f">Holat</label><select id="fTR_holat">'
+      +[["joriy","Joriy"],["yopilgan","Yopilgan"]].map(function(x){return '<option value="'+x[0]+'"'+(tr3&&tr3.holat===x[0]?" selected":"")+'>'+x[1]+'</option>'}).join("")
+      +'</select></div></div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button class="btn" onclick="tirajSaqla()">Saqlash</button>'
+      +(trId?'<button class="btn2" style="flex:0 0 90px" onclick="tirajOchir(\''+trId+'\')">O\'chirish</button>':'')
+      +'</div>';
+  }
+
+  /* ── KUTILAYOTGAN TUSHUM ── */
+  if(MODAL==="kutYangi"||(MODAL&&MODAL.indexOf("kut_")===0)){
+    var kutId=MODAL.indexOf("kut_")===0?MODAL.slice(4):null;
+    var kt=kutId?(D.Kutilayotgan||[]).filter(function(x){return String(x.id)===kutId})[0]:null;
+    t=kutId?"Kutilayotgan tushum":"Yangi kutilayotgan tushum";
+    h+='<input type="hidden" id="fKTId" value="'+(kutId||"")+'">'
+      +'<div class="grid" style="margin-bottom:10px">'
+      +'<div style="grid-column:1/-1"><label class="f">Nomi</label><input id="fKT_kim" value="'+esc(kt?kt.kim:"")+'" placeholder="masalan: 1000 Kitob loyihasi"></div>'
+      +'<div><label class="f">Summa</label><input id="fKT_summa" inputmode="numeric" value="'+(kt?n(kt.summa):"")+'"></div>'
+      +'<div><label class="f">Kutilayotgan sana</label><input id="fKT_sana" type="date" value="'+(kt?String(kt.sana).slice(0,10):bugun())+'"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button class="btn" onclick="kutSaqla()">Saqlash</button>'
+      +(kutId?'<button class="btn2" style="flex:0 0 90px" onclick="kutOchir(\''+kutId+'\')">O\'chirish</button>':'')
+      +'</div>';
+  }
+
   /* ── TARQATUVCHI AMALLARI ── */
   if(MODAL==="tarqAmal"){
     t="Tarqatuvchi";
@@ -1650,45 +1828,98 @@ function modalHTML(m){
   }
   if(MODAL==="royalty"){
     t="Royalty";
-    var rl=m.kitob.filter(function(b){return b.roy>0||b.foiz>0})
-      .map(function(b){return{nom:b.nom,foiz:b.foiz,tus:b.tus,roy:b.roy,sot:b.sot,tirajlar:b.tirajlar}})
-      .sort(function(a,b2){return b2.roy-a.roy});
+    var rl=m.kitob.filter(function(b){return b.roy>0||b.foiz>0});
     var jamiR=rl.reduce(function(a,x){return a+x.roy},0);
-    h+='<div class="lbl"><span>Kitob bo\'yicha</span><b>'+mln(jamiR)+' mln</b></div>';
-    rl.forEach(function(x,i){
-      if(!x.roy){
+    var jamiTol=rl.reduce(function(a,x){return a+x.royTolangan},0);
+    h+='<div style="display:flex;gap:8px;margin-bottom:14px">'
+      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:9px;color:var(--mute)">Hisoblangan</div>'
+      +'<div style="font-family:var(--mono);font-size:16px;font-weight:700">'+mln(jamiR)+'</div></div>'
+      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:9px;color:var(--mute)">To\'langan</div>'
+      +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+c("mint")+'">'+mln(jamiTol)+'</div></div>'
+      +'<div style="flex:1;background:var(--card2);border-radius:12px;padding:11px">'
+      +'<div style="font-size:9px;color:var(--mute)">Qoldiq</div>'
+      +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+c("amber")+'">'+mln(jamiR-jamiTol)+'</div></div></div>';
+
+    rl.sort(function(a,b2){return b2.roy-a.roy}).forEach(function(x,i){
+      if(!x.roy&&!x.foiz){
         h+='<div style="padding:9px 0;border-bottom:1px solid var(--card2);display:flex;justify-content:space-between">'
           +'<span style="font-family:var(--disp);font-size:14px">'+esc(x.nom)+'</span>'
           +'<span style="font-family:var(--mono);font-size:11px;color:'+c("mint")+'">royalty yo\'q</span></div>';
         return;
       }
       var col=PALITRA[i%PALITRA.length];
-      h+='<div style="padding:11px 0;border-bottom:1px solid var(--card2)">'
-        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">'
-        +'<span style="font-family:var(--disp);font-size:14.5px">'+esc(x.nom)+'</span>'
-        +'<span style="font-family:var(--mono);font-size:13px;color:'+col+'">'+fmt(x.roy)+'</span></div>'
-        +'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim)">'
-        +fmt(x.sot)+' nusxa · tushum '+mln(x.tus)+' mln · '+x.foiz+'%</div></div>';
-    });
-    /* huquq majburiyatlari */
-    var hq=m.ob.filter(function(o){return o.tur==="Huquq"||/royalty|muallif/i.test(o.kim)});
-    if(hq.length){
-      h+='<div class="lbl" style="margin-top:16px"><span>To\'lov majburiyatlari</span></div>';
-      hq.sort(function(a,b2){return new Date(a.sana)-new Date(b2.sana)}).forEach(function(o){
-        var dd=kunTo(o.sana);
-        h+='<div style="padding:10px 0;border-bottom:1px solid var(--card2)">'
-          +'<div style="display:flex;justify-content:space-between;gap:8px">'
-          +'<span style="font-size:12.5px">'+esc(o.kim)+'</span>'
-          +'<span style="font-family:var(--mono);font-size:12.5px;color:'+(dd<0?c("coral"):c("amber"))+'">'+fmt(o.qoldiq)+'</span></div>'
-          +'<div style="font-family:var(--mono);font-size:9px;color:'+(dd<0?c("coral"):c("dim"))+';margin-top:3px">'
-          +o.sana+' · '+(dd<0?(-dd)+" kun kechikdi":dd+" kun")
-          +(o.tol?' · to\'langan '+fmt(o.tol):'')+'</div></div>';
+      h+='<div style="padding:12px 0;border-bottom:1px solid var(--card2)">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px">'
+        +'<span style="font-family:var(--disp);font-size:15px">'+esc(x.nom)+'</span>'
+        +'<span style="font-family:var(--mono);font-size:11px;color:var(--dim)">'+x.foiz+'%</span></div>';
+      /* to'langan davrlar */
+      (x.royTarix||[]).forEach(function(r){
+        h+='<div style="background:var(--card2);border-radius:10px;padding:9px 11px;margin-bottom:6px">'
+          +'<div style="display:flex;justify-content:space-between;gap:6px">'
+          +'<span style="font-size:11.5px;color:'+c("mint")+'">\u2713 '+esc(r.davr||"to\'langan")+'</span>'
+          +'<span style="font-family:var(--mono);font-size:12px;color:'+c("mint")+'">'+fmt(n(r.tolanganSom)+n(r.komissiya))+'</span></div>'
+          +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:4px;line-height:1.5">'
+          +fmt(n(r.nusxa))+' nusxa \u00b7 royalty '+fmt(n(r.royaltySom))+' ('+(n(r.royaltyUsd)||0)+'$)'
+          +(n(r.avansUsd)?' \u00b7 avans \u2212'+n(r.avansUsd)+'$':'')
+          +'<br>to\'landi '+fmt(n(r.tolanganSom))+(n(r.komissiya)?' + komissiya '+fmt(n(r.komissiya)):'')
+          +' \u00b7 kurs '+fmt(n(r.kurs))
+          +(n(r.hisobotKurs)&&n(r.hisobotKurs)!==n(r.kurs)?' (hisobot '+fmt(n(r.hisobotKurs))+')':'')
+          +'<br>'+String(r.sana).slice(0,10)+'</div></div>';
       });
-    }
+      /* hisoblanayotgan qoldiq */
+      if(x.royQoldiq>0){
+        h+='<div style="background:var(--bg);border:1px solid '+c("amber")+'33;border-radius:10px;padding:9px 11px">'
+          +'<div style="display:flex;justify-content:space-between;gap:6px">'
+          +'<span style="font-size:11.5px;color:'+c("amber")+'">Hisoblanmoqda</span>'
+          +'<span style="font-family:var(--mono);font-size:12px;color:'+c("amber")+'">'+fmt(x.royQoldiq)+'</span></div>'
+          +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:4px">'
+          +fmt(x.royQoldiqNusxa)+' nusxa sotilgan \u00b7 hisobot muddati 31.12.2026</div>'
+          +'<button class="btn2" style="width:100%;margin-top:7px;padding:7px" onclick="modalOch(\'royTolov_'+x.id+'\')">To\'lov yozish</button></div>';
+      }
+      h+='</div>';
+    });
     h+='<div style="margin-top:12px;background:var(--card2);border-radius:12px;padding:12px;font-size:11.5px;line-height:1.5;color:var(--mute)">'
-      +'Royalty sotilgan nusxadan hisoblanadi. Tarqatuvchi to\'lamagan nusxalar uchun pul hali kelmagan — '
-      +'lekin muallif oldidagi majburiyat allaqachon yuzaga kelgan.</div>';
+      +'Royalty sotilgan nusxadan hisoblanadi va sotuv o\'sgani sari ko\'payadi. '
+      +'Hisobot muddatida to\'lov yozasiz \u2014 o\'shanda kurs va komissiya saqlanadi.</div>';
   }
+
+  /* ── ROYALTY TO'LOVI ── */
+  if(MODAL&&MODAL.indexOf("royTolov_")===0){
+    var rkid=MODAL.slice(9);
+    var rk=m.kitob.filter(function(x){return x.id===rkid})[0];
+    if(rk){
+      t="Royalty to'lovi · "+rk.nom;
+      var kursHz2=m.kursJoriy||12000;
+      h+='<input type="hidden" id="fRId" value="'+rkid+'">'
+        +'<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px">'
+        +'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim);line-height:1.6">'
+        +'Sotilgan: '+fmt(rk.royQoldiqNusxa)+' nusxa<br>'
+        +'Hisoblangan royalty: '+fmt(rk.royQoldiq)+' so\'m ('+rk.foiz+'%)</div></div>'
+        +'<div class="grid" style="margin-bottom:10px">'
+        +'<div style="grid-column:1/-1"><label class="f">Davr nomi</label><input id="fR_davr" placeholder="masalan: 3-tiraj" value=""></div>'
+        +'<div><label class="f">Nusxa</label><input id="fR_nusxa" inputmode="numeric" value="'+rk.royQoldiqNusxa+'"></div>'
+        +'<div><label class="f">Tushum, so\'m</label><input id="fR_tushum" inputmode="numeric" value="'+Math.round(rk.royQoldiq/rk.foiz*100)+'"></div>'
+        +'<div><label class="f">Royalty, so\'m</label><input id="fR_royaltySom" inputmode="numeric" value="'+Math.round(rk.royQoldiq)+'"></div>'
+        +'<div><label class="f">Hisobot kursi</label><input id="fR_hisobotKurs" inputmode="numeric" value="'+kursHz2+'"></div>'
+        +'<div><label class="f">Avans, $</label><input id="fR_avans" inputmode="numeric" placeholder="0"></div>'
+        +'<div><label class="f">To\'lov kursi</label><input id="fR_kurs" inputmode="numeric" value="'+kursHz2+'"></div>'
+        +'<div><label class="f">To\'langan, so\'m</label><input id="fR_tolanganSom" inputmode="numeric" placeholder="0"></div>'
+        +'<div><label class="f">Komissiya, so\'m</label><input id="fR_kom" inputmode="numeric" placeholder="0"></div>'
+        +'<div><label class="f">Qaysi hisobdan</label><select id="fR_kassa">'
+        +'<option value="">yozilmasin</option>'
+        +KAS.map(function(k){return '<option value="'+k+'">'+KNOM[k]+'</option>'}).join("")
+        +'</select></div>'
+        +'<div><label class="f">Sana</label><input id="fR_sana" type="date" value="'+bugun()+'"></div>'
+        +'</div>'
+        +'<p style="font-size:10.5px;color:var(--dim);line-height:1.5;margin:0 0 12px">'
+        +'Hisobot kursi \u2014 royalty dollarga aylantirilgan kurs. To\'lov kursi \u2014 pul o\'tkazilgan kundagi kurs. '
+        +'Ikkalasi har xil bo\'lishi mumkin.</p>'
+        +'<button class="btn" onclick="royaltyTolovSaqla()">Yozish</button>';
+    }
+  }
+
   if(MODAL==="ombor"){
     t="Tarqatuvchidagi ombor";
     var lst=m.kitob.filter(function(b){return b.qoldiq>0&&b.dist>0})
@@ -1732,7 +1963,27 @@ function xatoKor(e){
     +'<button class="btn" style="margin-top:10px" onclick="qayta()">Qayta urinish</button></div>';
 }
 try{if(window.Telegram&&Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}}catch(e){}
-yukla().then(render).catch(xatoKor);
+
+/* ═══ Avtomatik yangilanish ═══
+   Modal ochiq bo'lsa yoki sahifa fonda bo'lsa \u2014 to'xtaydi */
+var AVTO=null, OXIRGI_YANGI=Date.now();
+function avtoYangila(){
+  if(MODAL)return;                                   /* forma ochiq */
+  if(document.hidden)return;                          /* fonda */
+  if(Date.now()-OXIRGI_YANGI<50000)return;
+  OXIRGI_YANGI=Date.now();
+  yukla().then(function(){ if(!MODAL)render(); }).catch(function(){});
+}
+function avtoBoshla(){
+  if(AVTO)clearInterval(AVTO);
+  AVTO=setInterval(avtoYangila,20000);
+}
+try{
+  document.addEventListener("visibilitychange",function(){
+    if(!document.hidden){ OXIRGI_YANGI=0; avtoYangila(); }
+  });
+}catch(e){}
+yukla().then(function(){render();avtoBoshla()}).catch(xatoKor);
 </script>
 </body>
 </html>
