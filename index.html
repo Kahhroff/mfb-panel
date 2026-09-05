@@ -719,7 +719,10 @@ function ekranPul(m){
 
   if(m.kirTaq.length){
     var RANG=[c("mint"),c("sky"),c("lav"),c("amber"),c("rose"),c("coral")];
-    h+='<div class="card"><div class="lbl"><span>Kirim taqsimoti</span><b style="color:'+c("mint")+'">'+mln(m.kirJ)+' mln</b></div>'
+    h+='<div class="card">'
+      +'<div class="lbl" style="cursor:pointer" onclick="modalOch(\'kirimDetal\')">'
+      +'<span>Kirim taqsimoti \u00b7 bu oy</span>'
+      +'<b style="color:'+c("mint")+'">'+mln(m.kirJ)+' mln \u203a</b></div>'
       +chart("g6",optDonutUmum(m.kirTaq,m.kirJ,RANG));
     m.kirTaq.forEach(function(x,i){
       var col=PALITRA[i%PALITRA.length];
@@ -729,14 +732,15 @@ function ekranPul(m){
         +'<div style="text-align:right"><div style="font-family:var(--mono);font-size:11.5px;color:'+c("mint")+'">'+fmt(x.v)+'</div>'
         +'<div style="font-family:var(--mono);font-size:8px;color:var(--dim)">'+Math.round(x.v/m.kirJ*100)+'%</div></div></div>';
     });
-    if(m.kirKassa.length>1){
+    if(true){
       h+='<div style="display:flex;gap:7px;margin-top:9px">';
       KAS.forEach(function(kk){
         var v=0;
         (D.Yozuv||[]).forEach(function(y2){if(y2.tur==="kirim"&&y2.kassa===kk&&String(y2.sana).slice(0,7)===bugun().slice(0,7))v+=n(y2.summa)});
-        h+='<div class="tap" onclick="modalOch(\'kir_'+kk+'\')" style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px">'
+        h+='<div onclick="modalOch(\'kir_'+kk+'\')" style="cursor:pointer;position:relative;flex:1;background:var(--card2);border-radius:12px;padding:9px 11px">'
           +'<div style="font-size:9px;color:var(--mute)">'+KNOM[kk]+'</div>'
-          +'<div style="font-family:var(--mono);font-size:14px;color:'+KCOL[kk]+'">'+mln(v)+'</div></div>';
+          +'<div style="font-family:var(--mono);font-size:14px;color:'+KCOL[kk]+'">'+mln(v)+'</div>'
+          +'<span style="position:absolute;right:9px;top:8px;color:var(--dim);font-size:14px">\u203a</span></div>';
       });
       h+='</div>';
     }
@@ -744,7 +748,10 @@ function ekranPul(m){
   }
 
   if(m.xar.length){
-    h+='<div class="card"><div class="lbl"><span>Xarajat taqsimoti</span><b>'+mln(m.xarJ)+' mln</b></div>'
+    h+='<div class="card">'
+      +'<div class="lbl" style="cursor:pointer" onclick="modalOch(\'chiqimDetal\')">'
+      +'<span>Xarajat taqsimoti \u00b7 bu oy</span>'
+      +'<b style="color:'+c("coral")+'">'+mln(m.xarJ)+' mln \u203a</b></div>'
       +chart("g3",optDonut(m))
       +'<div style="display:flex;gap:7px;margin-top:8px">'
       +'<div class="tap" onclick="modalOch(\'guruh_Shaxsiy\')" style="flex:1;background:var(--card2);border-radius:12px;padding:9px 11px"><div style="font-size:9px;color:var(--mute)">Ro\'zg\'or</div><div style="font-family:var(--mono);font-size:15px;color:'+c("lav")+'">'+mln(m.xarShax)+'</div></div>'
