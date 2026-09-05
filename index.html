@@ -65,6 +65,14 @@ nav button.on i{background:var(--amber)}
 .warn{padding:10px 12px;background:rgba(255,122,92,.1);border-radius:12px;font-size:11px;color:var(--coral);
   line-height:1.45;margin-top:9px}
 .load{text-align:center;padding:70px 20px;color:var(--mute);font-family:var(--mono);font-size:12px}
+#toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);z-index:80;
+  background:var(--card3);border:1px solid var(--line);border-radius:14px;padding:12px 18px;
+  display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt);
+  box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;max-width:88%}
+#toast.ko{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast .tico{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:13px;font-weight:700}
 .bar{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;display:flex}
 .ovl{position:fixed;inset:0;background:rgba(5,10,15,.82);backdrop-filter:blur(6px);z-index:60;
   display:flex;align-items:flex-end;justify-content:center;animation:fo .2s ease}
@@ -78,6 +86,7 @@ nav button.on i{background:var(--amber)}
 </head>
 <body>
 <div id="app"><div class="load">Yuklanyapti…</div></div>
+<div id="toast"><span class="tico"></span><span id="toastMatn"></span></div>
 <nav id="nav"></nav>
 
 <script>
@@ -204,27 +213,47 @@ function api(p){
   return fetch(u).then(function(r){return r.json()});
 }
 function yukla(){return api({amal:"hammasi"}).then(function(j){if(!j.ok)throw new Error(j.xato||"xato");D=j.data;return D})}
-function belgi(t){holat=t;var e=document.getElementById("holat");if(e)e.textContent=t;
-  if(t)setTimeout(function(){holat="";var e2=document.getElementById("holat");if(e2)e2.textContent=""},1800)}
+var TOAST_T=null;
+function belgi(t,tur){
+  holat=t;
+  var e=document.getElementById("holat"); if(e)e.textContent=t;
+  if(!t)return;
+  var el=document.getElementById("toast");
+  if(!el)return;
+  var xato=tur==="xato"||/xato|ulanmadi|kerak|kiriting|topilmadi|yo'q/i.test(t);
+  var kutish=/saqlanyapti|yuklanyapti|o'chirilyapti/i.test(t);
+  var ico=el.querySelector(".tico");
+  if(ico){
+    ico.textContent=kutish?"":(xato?"!":"\u2713");
+    ico.style.background=kutish?"transparent":(xato?c("coral"):c("mint"));
+    ico.style.color=kutish?c("mute"):"#0A1118";
+    if(kutish)ico.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="'+c("mute")
+      +'" stroke-width="2.5" stroke-linecap="round"><path d="M12 3a9 9 0 109 9"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></path></svg>';
+  }
+  var m2=document.getElementById("toastMatn"); if(m2)m2.textContent=t;
+  el.classList.add("ko");
+  if(TOAST_T)clearTimeout(TOAST_T);
+  if(!kutish)TOAST_T=setTimeout(function(){el.classList.remove("ko");holat=""},2200);
+}
 function qosh(v,o){belgi("saqlanyapti…");
   return api({amal:"qosh",varaq:v,obj:JSON.stringify(o)}).then(function(j){
-    if(j.ok){if(!D[v])D[v]=[];D[v].push(j.obj);belgi("saqlandi");render()}else belgi("xato: "+j.xato)
+    if(j.ok){if(!D[v])D[v]=[];D[v].push(j.obj);belgi("Yozuv qo'shildi");render()}else belgi("Xato: "+j.xato,"xato")
   }).catch(function(){belgi("ulanmadi")})}
 function yangi(v,id,m,q){belgi("saqlanyapti…");
   return api({amal:"yangila",varaq:v,id:id,maydon:m,qiymat:q}).then(function(j){
-    if(j.ok){D[v].forEach(function(x){if(String(x.id)===String(id))x[m]=q});belgi("saqlandi");render()}
+    if(j.ok){D[v].forEach(function(x){if(String(x.id)===String(id))x[m]=q});belgi("Saqlandi");render()}
   }).catch(function(){belgi("ulanmadi")})}
 function ochir(v,id){belgi("o'chirilyapti…");
   return api({amal:"ochir",varaq:v,id:id}).then(function(j){
-    if(j.ok){D[v]=D[v].filter(function(x){return String(x.id)!==String(id)});belgi("o'chdi");render()}
+    if(j.ok){D[v]=D[v].filter(function(x){return String(x.id)!==String(id)});belgi("O'chirildi");render()}
   }).catch(function(){belgi("ulanmadi")})}
 /* Yaxlit server amallari */
-function amal(params){
+function amal(params,xabar){
   belgi("saqlanyapti…");
   return api(params).then(function(j){
-    if(j.ok){ return yukla().then(function(){belgi("saqlandi");render();return j}); }
-    belgi("xato: "+(j.xato||"noma'lum")); return j;
-  }).catch(function(){belgi("ulanmadi")});
+    if(j.ok){ return yukla().then(function(){belgi(xabar||"Saqlandi");render();return j}); }
+    belgi("Xato: "+(j.xato||"noma'lum"),"xato"); return j;
+  }).catch(function(){belgi("Ulanmadi \u2014 internetni tekshiring","xato")});
 }
 
 function kassaBelgila(nom,q){belgi("saqlanyapti…");
@@ -327,8 +356,9 @@ function hisob(){
     var sot=n(bk.s50)+n(bk.s60),tus=n(bk.s50)*n(bk.dist)+n(bk.s60)*n(bk.retail);
     var fk=nrmk(bk.nom);
     var foiz=8;
+    if(FOIZ[fk]!==undefined) foiz=FOIZ[fk];
+    /* Kitob varag'idagi foiz har doim ustun */
     if(bk.foiz!==undefined&&bk.foiz!==""&&!isNaN(Number(bk.foiz))) foiz=Number(bk.foiz);
-    else if(FOIZ[fk]!==undefined) foiz=FOIZ[fk];
     var roy=tus*foiz/100;
     /* to'langan royalty tarixi */
     var royTol=0, royNusxa=0, royTarix=[];
@@ -958,11 +988,12 @@ function ekranKirit(m){
       +'<input id="kiManba" value="'+esc(KI.manba)+'" placeholder="masalan: Tarqatuvchi" '
       +'onchange="KI.manba=this.value" style="margin-bottom:9px">';
     h+='<div class="chips" style="margin-bottom:2px">';
-    manbaLst.slice(0,6).forEach(function(mn){
+    manbaLst.slice(0,8).forEach(function(mn){
       h+='<button onclick="KI.manba=\''+String(mn).replace(/'/g,"\\'")+'\';render()" '
-        +'style="background:'+(KI.manba===mn?"var(--card3)":"var(--card2)")+';color:'+(KI.manba===mn?c("mint"):"var(--txt)")+'">'
+        +'style="background:'+(norm(KI.manba)===norm(mn)?"var(--card3)":"var(--card2)")+';color:'+(norm(KI.manba)===norm(mn)?c("mint"):"var(--txt)")+'">'
         +esc(mn)+'</button>';
     });
+    h+='<button onclick="modalOch(\'manbaYangi\')" style="border:1.5px dashed var(--dim);background:none;color:var(--dim);flex:1 1 60px">+ Yangi</button>';
     h+='</div>';
   }
 
@@ -1161,6 +1192,11 @@ function fKatGuruh(g){
     b.style.color=g==="Nashriyot"?c("amber"):"var(--mute)";
   }
 }
+function manbaSaqla(){
+  var nom=(document.getElementById("fManbaNom").value||"").trim();
+  if(!nom){belgi("Nom kiriting","xato");return}
+  KI.manba=nom; MODAL=null; belgi("Manba tanlandi"); render();
+}
 function kategoriyaSaqla(){
   var nom=(document.getElementById("fKatNom").value||"").trim();
   if(!nom){belgi("nom kiriting");return}
@@ -1197,7 +1233,7 @@ function yozuvSaqla(){
   var obj={sana:sFV("fY_sana"),summa:kFV("fY_summa"),tur:sFV("fY_tur"),
     kassa:sFV("fY_kassa"),cat:sFV("fY_cat"),izoh:sFV("fY_izoh")};
   var eski=(D.Yozuv||[]).filter(function(x){return String(x.id)===id})[0];
-  amal({amal:"yangilaKop",varaq:"Yozuv",id:id,obj:JSON.stringify(obj)}).then(function(){
+  amal({amal:"yangilaKop",varaq:"Yozuv",id:id,obj:JSON.stringify(obj)},"Yozuv yangilandi").then(function(){
     if(eski&&eski.objId) api({amal:"majHisobla",objId:eski.objId}).then(function(){yukla().then(render)});
     MODAL=null; render();
   });
@@ -1216,7 +1252,7 @@ function majTolovSaqla(){
   KAS.forEach(function(k){ var v=kFV("fM_"+k); if(v>0)tolovlar.push({kassa:k,summa:v}); });
   if(!tolovlar.length){belgi("summani kiriting");return}
   amal({amal:"majTolov",objId:id,tolovlar:JSON.stringify(tolovlar),
-    kurs:kFV("fM_kurs"),komissiya:kFV("fM_kom"),komissiyaKassa:tolovlar[0].kassa})
+    kurs:kFV("fM_kurs"),komissiya:kFV("fM_kom"),komissiyaKassa:tolovlar[0].kassa},"To'lov yozildi")
     .then(function(){MODAL=null;render()});
 }
 function majYop(id,qiymat){
@@ -1259,8 +1295,8 @@ function tirajSaqla(){
   var obj={kitob:sFV("fTRKitob"),raqam:kFV("fTR_raqam"),nusxa:kFV("fTR_nusxa"),
     narxDona:kFV("fTR_narx"),tur:sFV("fTR_tur"),sana:sFV("fTR_sana"),holat:sFV("fTR_holat"),izoh:""};
   if(!obj.kitob||!obj.nusxa){belgi("kitob va nusxa kerak");return}
-  if(id) amal({amal:"yangilaKop",varaq:"Tiraj",id:id,obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
-  else amal({amal:"qosh",varaq:"Tiraj",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+  if(id) amal({amal:"yangilaKop",varaq:"Tiraj",id:id,obj:JSON.stringify(obj)},"Tiraj yangilandi").then(function(){MODAL=null;render()});
+  else amal({amal:"qosh",varaq:"Tiraj",obj:JSON.stringify(obj)},"Tiraj qo'shildi").then(function(){MODAL=null;render()});
 }
 function tirajOchir(id){
   amal({amal:"ochir",varaq:"Tiraj",id:id}).then(function(){MODAL=null;render()});
@@ -1271,11 +1307,45 @@ function kutSaqla(){
   var id=sFV("fKTId");
   var obj={kim:sFV("fKT_kim"),summa:kFV("fKT_summa"),sana:sFV("fKT_sana"),paid:false};
   if(!obj.kim||!obj.summa){belgi("nom va summa kerak");return}
-  if(id) amal({amal:"yangilaKop",varaq:"Kutilayotgan",id:id,obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
-  else amal({amal:"qosh",varaq:"Kutilayotgan",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+  if(id) amal({amal:"yangilaKop",varaq:"Kutilayotgan",id:id,obj:JSON.stringify(obj)},"Yangilandi").then(function(){MODAL=null;render()});
+  else amal({amal:"qosh",varaq:"Kutilayotgan",obj:JSON.stringify(obj)},"Qo'shildi").then(function(){MODAL=null;render()});
 }
 function kutOchir(id){
   amal({amal:"ochir",varaq:"Kutilayotgan",id:id}).then(function(){MODAL=null;render()});
+}
+
+/* ── Royalty avtomatik hisob ── */
+function royHisobla(){
+  var id=sFV("fRId");
+  var kb=(D.Kitob||[]).filter(function(x){return String(x.id)===id})[0];
+  if(!kb)return;
+  var foiz=Number(sFV("fRFoiz"))||8;
+  var n50=kFV("fR_n50"), n60=kFV("fR_n60");
+  var dist=n(kb.dist), retail=n(kb.retail);
+  var tushum=n50*dist+n60*retail;
+  var royalty=Math.round(tushum*foiz/100);
+  var nusxa=n50+n60;
+  var hk=kFV("fR_hisobotKurs")||1;
+  var avans=kFV("fR_avans");
+  var royUsd=Math.round(royalty/hk*100)/100;
+  var tolUsd=Math.round((royUsd-avans)*100)/100;
+
+  var e=document.getElementById("royNatija");
+  if(e){
+    e.innerHTML='<div style="font-size:10px;color:var(--mute)">Tushum va royalty</div>'
+      +'<div style="font-family:var(--mono);font-size:11.5px;line-height:1.7;margin-top:5px">'
+      +(nusxa?fmt(nusxa)+' nusxa<br>Tushum: '+fmt(tushum)+' so\'m<br>'
+        +'<span style="color:'+c("amber")+'">Royalty '+foiz+'%: '+fmt(royalty)+' so\'m ('+royUsd+'$)</span>'
+        +(avans?'<br>Avans: \u2212'+avans+'$<br><span style="color:'+c("mint")+'">To\'lanadi: '+tolUsd+'$</span>':'')
+        :'nusxa kiriting')
+      +'</div>';
+  }
+  var q1=document.getElementById("fR_nusxa"); if(q1)q1.value=nusxa;
+  var q2=document.getElementById("fR_tushum"); if(q2)q2.value=tushum;
+  var q3=document.getElementById("fR_royaltySom"); if(q3)q3.value=royalty;
+  /* to'langan bo'sh bo'lsa taklif qilamiz */
+  var q4=document.getElementById("fR_tolanganSom");
+  if(q4&&!q4.value&&tolUsd>0){ q4.placeholder=fmt(Math.round(tolUsd*(kFV("fR_kurs")||hk))); }
 }
 
 /* ── Royalty to'lovi ── */
@@ -1290,7 +1360,7 @@ function royaltyTolovSaqla(){
     kurs:kFV("fR_kurs"),tolanganSom:kFV("fR_tolanganSom"),
     komissiya:kFV("fR_kom"),kassa:sFV("fR_kassa"),komissiyaKassa:sFV("fR_kassa")};
   if(!obj.royaltySom){belgi("royalty summasini kiriting");return}
-  amal({amal:"royaltyTolov",obj:JSON.stringify(obj)}).then(function(){MODAL=null;render()});
+  amal({amal:"royaltyTolov",obj:JSON.stringify(obj)},"Royalty to'lovi yozildi").then(function(){MODAL=null;render()});
 }
 
 /* ── Tarqatuvchi amallari ── */
@@ -1298,13 +1368,14 @@ function tarqSaqla(rejim){
   if(rejim==="tolov"){
     var s=kFV("fT_summa");
     if(!s){belgi("summani kiriting");return}
-    amal({amal:"tarqTolov",summa:s,kassa:sFV("fT_kassa")}).then(function(){MODAL=null;render()});
+    amal({amal:"tarqTolov",summa:s,kassa:sFV("fT_kassa")},"Tarqatuvchi to'lovi yozildi").then(function(){MODAL=null;render()});
     return;
   }
   var kitob=sFV("fT_kitob"), nusxa=kFV("fT_nusxa"), narx=kFV("fT_narx");
   if(!kitob||!nusxa){belgi("kitob va nusxani kiriting");return}
   amal({amal:rejim==="berdim"?"tarqBerdim":"tarqSotdi",
-    kitob:kitob,nusxa:nusxa,narx:narx}).then(function(){MODAL=null;render()});
+    kitob:kitob,nusxa:nusxa,narx:narx},rejim==="berdim"?"Tarqatuvchiga berildi":"Sotuv yozildi")
+    .then(function(){MODAL=null;render()});
 }
 
 function majburiyatTakrorSaqla(){
@@ -1732,6 +1803,15 @@ function modalHTML(m){
     }
   }
 
+  if(MODAL==="manbaYangi"){
+    t="Yangi kirim manbasi";
+    h+='<label class="f">Manba nomi</label>'
+      +'<input id="fManbaNom" placeholder="masalan: Uzum marketplace" style="margin-bottom:14px">'
+      +'<p style="font-size:10.5px;color:var(--dim);line-height:1.5;margin:0 0 12px">'
+      +'Manba kirim qaysi manbadan kelganini bildiradi. Tanlangach tugmalar orasida chiqadi.</p>'
+      +'<button class="btn" onclick="manbaSaqla()">Tanlash</button>';
+  }
+
   if(MODAL==="katYangi"){
     t="Yangi kategoriya";
     h+='<label class="f">Nomi</label><input id="fKatNom" placeholder="masalan: Kir yuvish" style="margin-bottom:12px">'
@@ -1828,7 +1908,7 @@ function modalHTML(m){
   }
   if(MODAL==="royalty"){
     t="Royalty";
-    var rl=m.kitob.filter(function(b){return b.roy>0||b.foiz>0});
+    var rl=m.kitob.slice();
     var jamiR=rl.reduce(function(a,x){return a+x.roy},0);
     var jamiTol=rl.reduce(function(a,x){return a+x.royTolangan},0);
     h+='<div style="display:flex;gap:8px;margin-bottom:14px">'
@@ -1843,10 +1923,12 @@ function modalHTML(m){
       +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+c("amber")+'">'+mln(jamiR-jamiTol)+'</div></div></div>';
 
     rl.sort(function(a,b2){return b2.roy-a.roy}).forEach(function(x,i){
-      if(!x.roy&&!x.foiz){
-        h+='<div style="padding:9px 0;border-bottom:1px solid var(--card2);display:flex;justify-content:space-between">'
+      if(!x.foiz){
+        h+='<div style="padding:9px 0;border-bottom:1px solid var(--card2)">'
+          +'<div style="display:flex;justify-content:space-between">'
           +'<span style="font-family:var(--disp);font-size:14px">'+esc(x.nom)+'</span>'
-          +'<span style="font-family:var(--mono);font-size:11px;color:'+c("mint")+'">royalty yo\'q</span></div>';
+          +'<span style="font-family:var(--mono);font-size:11px;color:'+c("mint")+'">royalty yo\'q</span></div>'
+          +'<button class="btn2" style="width:100%;margin-top:6px;padding:6px;font-size:9px" onclick="modalOch(\'royTolov_'+x.id+'\')">To\'lov yozish</button></div>';
         return;
       }
       var col=PALITRA[i%PALITRA.length];
@@ -1870,14 +1952,14 @@ function modalHTML(m){
       });
       /* hisoblanayotgan qoldiq */
       if(x.royQoldiq>0){
-        h+='<div style="background:var(--bg);border:1px solid '+c("amber")+'33;border-radius:10px;padding:9px 11px">'
+        h+='<div style="background:var(--bg);border:1px solid '+c("amber")+'33;border-radius:10px;padding:9px 11px;margin-bottom:6px">'
           +'<div style="display:flex;justify-content:space-between;gap:6px">'
           +'<span style="font-size:11.5px;color:'+c("amber")+'">Hisoblanmoqda</span>'
           +'<span style="font-family:var(--mono);font-size:12px;color:'+c("amber")+'">'+fmt(x.royQoldiq)+'</span></div>'
           +'<div style="font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:4px">'
-          +fmt(x.royQoldiqNusxa)+' nusxa sotilgan \u00b7 hisobot muddati 31.12.2026</div>'
-          +'<button class="btn2" style="width:100%;margin-top:7px;padding:7px" onclick="modalOch(\'royTolov_'+x.id+'\')">To\'lov yozish</button></div>';
+          +fmt(x.royQoldiqNusxa)+' nusxa sotilgan</div></div>';
       }
+      h+='<button class="btn2" style="width:100%;padding:7px" onclick="modalOch(\'royTolov_'+x.id+'\')">To\'lov yozish</button>';
       h+='</div>';
     });
     h+='<div style="margin-top:12px;background:var(--card2);border-radius:12px;padding:12px;font-size:11.5px;line-height:1.5;color:var(--mute)">'
@@ -1893,29 +1975,40 @@ function modalHTML(m){
       t="Royalty to'lovi · "+rk.nom;
       var kursHz2=m.kursJoriy||12000;
       h+='<input type="hidden" id="fRId" value="'+rkid+'">'
+        +'<input type="hidden" id="fRFoiz" value="'+rk.foiz+'">'
         +'<div style="background:var(--card2);border-radius:12px;padding:12px;margin-bottom:12px">'
         +'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim);line-height:1.6">'
-        +'Sotilgan: '+fmt(rk.royQoldiqNusxa)+' nusxa<br>'
-        +'Hisoblangan royalty: '+fmt(rk.royQoldiq)+' so\'m ('+rk.foiz+'%)</div></div>'
-        +'<div class="grid" style="margin-bottom:10px">'
-        +'<div style="grid-column:1/-1"><label class="f">Davr nomi</label><input id="fR_davr" placeholder="masalan: 3-tiraj" value=""></div>'
-        +'<div><label class="f">Nusxa</label><input id="fR_nusxa" inputmode="numeric" value="'+rk.royQoldiqNusxa+'"></div>'
-        +'<div><label class="f">Tushum, so\'m</label><input id="fR_tushum" inputmode="numeric" value="'+Math.round(rk.royQoldiq/rk.foiz*100)+'"></div>'
-        +'<div><label class="f">Royalty, so\'m</label><input id="fR_royaltySom" inputmode="numeric" value="'+Math.round(rk.royQoldiq)+'"></div>'
-        +'<div><label class="f">Hisobot kursi</label><input id="fR_hisobotKurs" inputmode="numeric" value="'+kursHz2+'"></div>'
-        +'<div><label class="f">Avans, $</label><input id="fR_avans" inputmode="numeric" placeholder="0"></div>'
+        +'Royalty stavkasi: '+rk.foiz+'%<br>'
+        +'Ulgurji '+fmt(rk.dist)+' \u00b7 retail '+fmt(rk.retail)+'<br>'
+        +'Hisobga olinmagan: '+fmt(rk.royQoldiqNusxa)+' nusxa</div></div>'
+        +'<label class="f">Davr nomi</label>'
+        +'<input id="fR_davr" placeholder="masalan: 3-tiraj" style="margin-bottom:12px">'
+        +'<div class="lbl"><span>Sotilgan nusxalar</span></div>'
+        +'<div class="grid" style="margin-bottom:6px">'
+        +'<div><label class="f">Ulgurji ('+fmt(rk.dist)+' so\'m)</label>'
+        +'<input id="fR_n50" inputmode="numeric" placeholder="0" oninput="royHisobla()"></div>'
+        +'<div><label class="f">Do\'kondan ('+fmt(rk.retail)+' so\'m)</label>'
+        +'<input id="fR_n60" inputmode="numeric" placeholder="0" oninput="royHisobla()"></div>'
+        +'</div>'
+        +'<div id="royNatija" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">'
+        +'<div style="font-size:10px;color:var(--mute)">Tushum va royalty</div>'
+        +'<div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:4px">nusxa kiriting</div></div>'
+        +'<input type="hidden" id="fR_nusxa" value="0">'
+        +'<input type="hidden" id="fR_tushum" value="0">'
+        +'<input type="hidden" id="fR_royaltySom" value="0">'
+        +'<div class="lbl"><span>To\'lov ma\'lumotlari</span></div>'
+        +'<div class="grid" style="margin-bottom:12px">'
+        +'<div><label class="f">Hisobot kursi</label><input id="fR_hisobotKurs" inputmode="numeric" value="'+kursHz2+'" oninput="royHisobla()"></div>'
+        +'<div><label class="f">Avans, $</label><input id="fR_avans" inputmode="numeric" placeholder="0" oninput="royHisobla()"></div>'
         +'<div><label class="f">To\'lov kursi</label><input id="fR_kurs" inputmode="numeric" value="'+kursHz2+'"></div>'
         +'<div><label class="f">To\'langan, so\'m</label><input id="fR_tolanganSom" inputmode="numeric" placeholder="0"></div>'
         +'<div><label class="f">Komissiya, so\'m</label><input id="fR_kom" inputmode="numeric" placeholder="0"></div>'
-        +'<div><label class="f">Qaysi hisobdan</label><select id="fR_kassa">'
-        +'<option value="">yozilmasin</option>'
-        +KAS.map(function(k){return '<option value="'+k+'">'+KNOM[k]+'</option>'}).join("")
-        +'</select></div>'
         +'<div><label class="f">Sana</label><input id="fR_sana" type="date" value="'+bugun()+'"></div>'
+        +'<div style="grid-column:1/-1"><label class="f">Kassadan chiqim yozilsinmi</label><select id="fR_kassa">'
+        +'<option value="">yo\'q \u2014 chiqim allaqachon yozilgan</option>'
+        +KAS.map(function(k){return '<option value="'+k+'">ha, '+KNOM[k]+' dan</option>'}).join("")
+        +'</select></div>'
         +'</div>'
-        +'<p style="font-size:10.5px;color:var(--dim);line-height:1.5;margin:0 0 12px">'
-        +'Hisobot kursi \u2014 royalty dollarga aylantirilgan kurs. To\'lov kursi \u2014 pul o\'tkazilgan kundagi kurs. '
-        +'Ikkalasi har xil bo\'lishi mumkin.</p>'
         +'<button class="btn" onclick="royaltyTolovSaqla()">Yozish</button>';
     }
   }
