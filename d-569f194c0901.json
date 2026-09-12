@@ -1,5 +1,5 @@
 {
- "yangilandi": "2026-09-12T07:16:27.742Z",
+ "yangilandi": "2026-09-12T13:16:27.098Z",
  "sana": "2026-09-12",
  "kurs": {
   "cbu": 11783,
@@ -8,31 +8,31 @@
  },
  "kassa": {
   "taqsimot": {
-   "Karta": 4128231.9499999993,
+   "Karta": 4096231.9499999993,
    "Hisob": 5148624,
    "Shaxsiy": 5514629
   },
-  "jami": 14791484.95
+  "jami": 14759484.95
  },
  "oqim": {
   "kun30": {
    "kirim": 89941416,
-   "chiqim": 82458726.05,
-   "sof": 7482689.950000003,
+   "chiqim": 82490726.05,
+   "sof": 7450689.950000003,
    "kunSoni": 30,
    "kunlikKirim": 2998047
   },
   "kun60": {
    "kirim": 89941416,
-   "chiqim": 82458726.05,
-   "sof": 7482689.950000003,
+   "chiqim": 82490726.05,
+   "sof": 7450689.950000003,
    "kunSoni": 60,
    "kunlikKirim": 1499024
   },
   "kun90": {
    "kirim": 89941416,
-   "chiqim": 82458726.05,
-   "sof": 7482689.950000003,
+   "chiqim": 82490726.05,
+   "sof": 7450689.950000003,
    "kunSoni": 90,
    "kunlikKirim": 999349
   }
@@ -147,7 +147,7 @@
     "tolangan": 0,
     "qoldiq": 1800000,
     "sana": "2026-09-20",
-    "kunQoldi": 8,
+    "kunQoldi": 7,
     "tur": "Jamoa",
     "qoldiqSom": 1800000
    },
@@ -158,7 +158,7 @@
     "tolangan": 3000000,
     "qoldiq": 12000000,
     "sana": "2026-09-30",
-    "kunQoldi": 18,
+    "kunQoldi": 17,
     "tur": "Jamoa",
     "qoldiqSom": 12000000
    },
@@ -169,7 +169,7 @@
     "tolangan": 10648000,
     "qoldiq": 2802000,
     "sana": "2026-09-30",
-    "kunQoldi": 18,
+    "kunQoldi": 17,
     "tur": "Ishlab chiqarish",
     "qoldiqSom": 2802000
    },
@@ -180,7 +180,7 @@
     "tolangan": 0,
     "qoldiq": 8300000,
     "sana": "2026-09-30",
-    "kunQoldi": 18,
+    "kunQoldi": 17,
     "tur": "Jamoa",
     "qoldiqSom": 8300000
    },
@@ -191,7 +191,7 @@
     "tolangan": 0,
     "qoldiq": 7300000,
     "sana": "2026-09-30",
-    "kunQoldi": 18,
+    "kunQoldi": 17,
     "tur": "Jamoa",
     "qoldiqSom": 7300000
    },
@@ -202,7 +202,7 @@
     "tolangan": 0,
     "qoldiq": 1800000,
     "sana": "2026-10-05",
-    "kunQoldi": 23,
+    "kunQoldi": 22,
     "tur": "Jamoa",
     "qoldiqSom": 1800000
    },
@@ -213,7 +213,7 @@
     "tolangan": 0,
     "qoldiq": 1800000,
     "sana": "2026-10-20",
-    "kunQoldi": 38,
+    "kunQoldi": 37,
     "tur": "Jamoa",
     "qoldiqSom": 1800000
    },
@@ -224,7 +224,7 @@
     "tolangan": 0,
     "qoldiq": 8000000,
     "sana": "2026-10-31",
-    "kunQoldi": 49,
+    "kunQoldi": 48,
     "tur": "Jamoa",
     "qoldiqSom": 8000000
    }
@@ -387,7 +387,8 @@
   "naqd qildirish uchun": 878549,
   "Tahrir": 5000000,
   "Sadaqa": 200000,
-  "Bosmaxona": 10648000
+  "Bosmaxona": 10648000,
+  "Pochta": 32000
  },
  "qarz": [
   {
