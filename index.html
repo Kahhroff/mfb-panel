@@ -1185,6 +1185,9 @@ function katBirlashtir(){
   if(norm(eski)===norm(yangi)){belgi("Bir xil kategoriya","xato");return}
   amal({amal:"katBirlashtir",eski:eski,yangi:yangi},eski+" \u2192 "+yangi);
 }
+function eksportYangila(){
+  amal({amal:"eksportYangila"},"Tahlil fayli yangilandi");
+}
 function takroriyBelgila(){
   amal({amal:"takroriyBelgila"},"Belgilandi");
 }
