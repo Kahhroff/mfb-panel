@@ -1,0 +1,420 @@
+{
+ "yangilandi": "2026-09-12T06:12:58.095Z",
+ "sana": "2026-09-12",
+ "kurs": {
+  "cbu": 11783,
+  "nbuSotibOlish": 11750,
+  "nbuSotish": 11820
+ },
+ "kassa": {
+  "taqsimot": {
+   "Karta": 4128231.9499999993,
+   "Hisob": 5148624,
+   "Shaxsiy": 5514629
+  },
+  "jami": 14791484.95
+ },
+ "oqim": {
+  "kun30": {
+   "kirim": 89941416,
+   "chiqim": 82458726.05,
+   "sof": 7482689.950000003,
+   "kunSoni": 30,
+   "kunlikKirim": 2998047
+  },
+  "kun60": {
+   "kirim": 89941416,
+   "chiqim": 82458726.05,
+   "sof": 7482689.950000003,
+   "kunSoni": 60,
+   "kunlikKirim": 1499024
+  },
+  "kun90": {
+   "kirim": 89941416,
+   "chiqim": 82458726.05,
+   "sof": 7482689.950000003,
+   "kunSoni": 90,
+   "kunlikKirim": 999349
+  }
+ },
+ "tarqatuvchi": {
+  "boshlangich": 151612800,
+  "yangiTiraj": 210736000,
+  "tolangan": 77174000,
+  "qoldiq": 285174800,
+  "oxirgi30KunTolov": 71276500,
+  "oxirgi30KunlikOrtacha": 2375883,
+  "tolovKunlariSoni30": 20,
+  "oxirgiHarakatlar": [
+   {
+    "sana": "2026-09-11",
+    "summa": 1000000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-10",
+    "summa": 1000000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-10",
+    "summa": 1000000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-09",
+    "summa": 123000000,
+    "tur": "yangi",
+    "izoh": "Qaysar 2460 nusxa"
+   },
+   {
+    "sana": "2026-09-08",
+    "summa": 4298000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-07",
+    "summa": 1100000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-07",
+    "summa": 1100000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-06",
+    "summa": 2000000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-06",
+    "summa": 1500000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-06",
+    "summa": 1130000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-05",
+    "summa": 1500000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-04",
+    "summa": 5500000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-03",
+    "summa": 1910000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-03",
+    "summa": 1300000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-02",
+    "summa": 11400000,
+    "tur": "tolov",
+    "izoh": ""
+   }
+  ]
+ },
+ "majburiyatlar": {
+  "royxat": [
+   {
+    "kim": "SMM · 20.09",
+    "summa": 1800000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 1800000,
+    "sana": "2026-09-20",
+    "kunQoldi": 8,
+    "tur": "Jamoa",
+    "qoldiqSom": 1800000
+   },
+   {
+    "kim": "Tarjimon — Sarkashlar",
+    "summa": 15000000,
+    "valyuta": "UZS",
+    "tolangan": 3000000,
+    "qoldiq": 12000000,
+    "sana": "2026-09-30",
+    "kunQoldi": 18,
+    "tur": "Jamoa",
+    "qoldiqSom": 12000000
+   },
+   {
+    "kim": "Bosmaxona eski qarz",
+    "summa": 13450000,
+    "valyuta": "UZS",
+    "tolangan": 10648000,
+    "qoldiq": 2802000,
+    "sana": "2026-09-30",
+    "kunQoldi": 18,
+    "tur": "Ishlab chiqarish",
+    "qoldiqSom": 2802000
+   },
+   {
+    "kim": "Sarkashlar tahrir · 30.09",
+    "summa": 8300000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 8300000,
+    "sana": "2026-09-30",
+    "kunQoldi": 18,
+    "tur": "Jamoa",
+    "qoldiqSom": 8300000
+   },
+   {
+    "kim": "Sarkashlar korrektura · 30.09",
+    "summa": 7300000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 7300000,
+    "sana": "2026-09-30",
+    "kunQoldi": 18,
+    "tur": "Jamoa",
+    "qoldiqSom": 7300000
+   },
+   {
+    "kim": "SMM · 05.10",
+    "summa": 1800000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 1800000,
+    "sana": "2026-10-05",
+    "kunQoldi": 23,
+    "tur": "Jamoa",
+    "qoldiqSom": 1800000
+   },
+   {
+    "kim": "SMM · 20.10",
+    "summa": 1800000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 1800000,
+    "sana": "2026-10-20",
+    "kunQoldi": 38,
+    "tur": "Jamoa",
+    "qoldiqSom": 1800000
+   },
+   {
+    "kim": "Babbitt tarjima qoldiq",
+    "summa": 8000000,
+    "valyuta": "UZS",
+    "tolangan": 0,
+    "qoldiq": 8000000,
+    "sana": "2026-10-31",
+    "kunQoldi": 49,
+    "tur": "Jamoa",
+    "qoldiqSom": 8000000
+   }
+  ],
+  "jamiQoldiqSom": 43802000
+ },
+ "kitoblar": [
+  {
+   "nom": "Qaysar",
+   "holat": "Savdoda",
+   "tiraj": 16770,
+   "sotilgan": 15070,
+   "qoldiq": 3960,
+   "tushum": 780500000,
+   "xarajat": 449087473,
+   "tannarx": 26779,
+   "royaltyFoiz": 8,
+   "royaltyHisoblangan": 62440000,
+   "royaltyTolangan": 33640000,
+   "sof": 268972527,
+   "ulgurji": 50000,
+   "retail": 60000
+  },
+  {
+   "nom": "Ali va Nino",
+   "holat": "Savdoda",
+   "tiraj": 2000,
+   "sotilgan": 980,
+   "qoldiq": 1020,
+   "tushum": 31360000,
+   "xarajat": 32372000,
+   "tannarx": 16186,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -1012000,
+   "ulgurji": 32000,
+   "retail": 40000
+  },
+  {
+   "nom": "Feride",
+   "holat": "Savdoda",
+   "tiraj": 2000,
+   "sotilgan": 1853,
+   "qoldiq": 137,
+   "tushum": 47436800,
+   "xarajat": 40000000,
+   "tannarx": 20000,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": 7436800,
+   "ulgurji": 25600,
+   "retail": 32000
+  },
+  {
+   "nom": "Otamga xat",
+   "holat": "Tayyor",
+   "tiraj": 2000,
+   "sotilgan": 0,
+   "qoldiq": 0,
+   "tushum": 0,
+   "xarajat": 51664473,
+   "tannarx": 25832,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -51664473,
+   "ulgurji": 0,
+   "retail": 0
+  },
+  {
+   "nom": "Sarkashlar",
+   "holat": "Ishlab chiqarishda",
+   "tiraj": 2000,
+   "sotilgan": 0,
+   "qoldiq": 0,
+   "tushum": 0,
+   "xarajat": 140000000,
+   "tannarx": 70000,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -140000000,
+   "ulgurji": 0,
+   "retail": 0
+  },
+  {
+   "nom": "Serhosil zamin",
+   "holat": "Ishlab chiqarishda",
+   "tiraj": 2000,
+   "sotilgan": 0,
+   "qoldiq": 0,
+   "tushum": 0,
+   "xarajat": 38109000,
+   "tannarx": 19055,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -38109000,
+   "ulgurji": 0,
+   "retail": 0
+  },
+  {
+   "nom": "Babbitt",
+   "holat": "Ishlab chiqarishda",
+   "tiraj": 0,
+   "sotilgan": 0,
+   "qoldiq": 0,
+   "tushum": 0,
+   "xarajat": 18000000,
+   "tannarx": 0,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -18000000,
+   "ulgurji": 0,
+   "retail": 0
+  },
+  {
+   "nom": "Hissiy idrok",
+   "holat": "Ishlab chiqarishda",
+   "tiraj": 0,
+   "sotilgan": 0,
+   "qoldiq": 0,
+   "tushum": 0,
+   "xarajat": 14000000,
+   "tannarx": 0,
+   "royaltyFoiz": 0,
+   "royaltyHisoblangan": 0,
+   "royaltyTolangan": 0,
+   "sof": -14000000,
+   "ulgurji": 0,
+   "retail": 0
+  }
+ ],
+ "xarajat30kun": {
+  "Ayolimga": 5743200,
+  "Kommunal": 356310,
+  "Do'kon": 560970,
+  "Transport": 169692,
+  "Amiti": 134000,
+  "Boshqa": 3000100,
+  "Sog'liq": 1744000,
+  "Ko'cha ovqatlanish": 1746943,
+  "Komissiya": 372053.05,
+  "Nashriyot": 2350000,
+  "Korzinka": 1745244,
+  "Kiyim-kechak": 991500,
+  "Oisha park": 96000,
+  "Ota-ona": 2950000,
+  "Taksi": 565165,
+  "Baxtiyor to’yi": 1300000,
+  "O’g’iloy opam": 2640000,
+  "Royalty": 24906000,
+  "Qarz to'lovi": 11860000,
+  "Xodim": 1800000,
+  "Cloud subscription": 300000,
+  "Qizim": 401000,
+  "naqd qildirish uchun": 878549,
+  "Tahrir": 5000000,
+  "Sadaqa": 200000,
+  "Bosmaxona": 10648000
+ },
+ "qarz": [
+  {
+   "nom": "Ilhom aka",
+   "jami": 50000,
+   "tolangan": 14000,
+   "oylik": 1000,
+   "muddat": "2029-02-01"
+  }
+ ],
+ "kutilayotgan": [
+  {
+   "kim": "1000 Kitob loyihasi",
+   "summa": 44760000,
+   "sana": "2026-09-15"
+  }
+ ],
+ "royaltyTolovlar": [
+  {
+   "kitob": "Qaysar",
+   "davr": "1-2 tiraj",
+   "nusxa": 8070,
+   "royaltySom": 33640000,
+   "tolanganSom": 24906000,
+   "komissiya": 349460,
+   "kurs": 11860,
+   "sana": "2026-09-04"
+  }
+ ]
+}
