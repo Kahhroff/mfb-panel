@@ -1,6 +1,6 @@
 {
- "yangilandi": "2026-09-13T13:16:21.678Z",
- "sana": "2026-09-13",
+ "yangilandi": "2026-09-13T19:16:17.781Z",
+ "sana": "2026-09-14",
  "kurs": {
   "cbu": 11783,
   "nbuSotibOlish": 11750,
@@ -8,44 +8,56 @@
  },
  "kassa": {
   "taqsimot": {
-   "Karta": 4096231.9499999993,
+   "Karta": 7693823.949999999,
    "Hisob": 5148624,
-   "Shaxsiy": 5514629
+   "Shaxsiy": 4339140
   },
-  "jami": 14759484.95
+  "jami": 17181587.95
  },
  "oqim": {
   "kun30": {
-   "kirim": 89941416,
-   "chiqim": 82490726.05,
-   "sof": 7450689.950000003,
+   "kirim": 95181416,
+   "chiqim": 85308623.05,
+   "sof": 9872792.950000003,
    "kunSoni": 30,
-   "kunlikKirim": 2998047
+   "kunlikKirim": 3172714
   },
   "kun60": {
-   "kirim": 89941416,
-   "chiqim": 82490726.05,
-   "sof": 7450689.950000003,
+   "kirim": 95181416,
+   "chiqim": 85308623.05,
+   "sof": 9872792.950000003,
    "kunSoni": 60,
-   "kunlikKirim": 1499024
+   "kunlikKirim": 1586357
   },
   "kun90": {
-   "kirim": 89941416,
-   "chiqim": 82490726.05,
-   "sof": 7450689.950000003,
+   "kirim": 95181416,
+   "chiqim": 85308623.05,
+   "sof": 9872792.950000003,
    "kunSoni": 90,
-   "kunlikKirim": 999349
+   "kunlikKirim": 1057571
   }
  },
  "tarqatuvchi": {
   "boshlangich": 151612800,
   "yangiTiraj": 210736000,
-  "tolangan": 77174000,
-  "qoldiq": 285174800,
-  "oxirgi30KunTolov": 71276500,
-  "oxirgi30KunlikOrtacha": 2375883,
-  "tolovKunlariSoni30": 20,
+  "tolangan": 82369000,
+  "qoldiq": 279979800,
+  "oxirgi30KunTolov": 76471500,
+  "oxirgi30KunlikOrtacha": 2549050,
+  "tolovKunlariSoni30": 22,
   "oxirgiHarakatlar": [
+   {
+    "sana": "2026-09-13",
+    "summa": 1300000,
+    "tur": "tolov",
+    "izoh": ""
+   },
+   {
+    "sana": "2026-09-12",
+    "summa": 3895000,
+    "tur": "tolov",
+    "izoh": ""
+   },
    {
     "sana": "2026-09-11",
     "summa": 1000000,
@@ -123,18 +135,6 @@
     "summa": 1910000,
     "tur": "tolov",
     "izoh": ""
-   },
-   {
-    "sana": "2026-09-03",
-    "summa": 1300000,
-    "tur": "tolov",
-    "izoh": ""
-   },
-   {
-    "sana": "2026-09-02",
-    "summa": 11400000,
-    "tur": "tolov",
-    "izoh": ""
    }
   ]
  },
@@ -177,12 +177,12 @@
     "kim": "Sarkashlar tahrir · 30.09",
     "summa": 8300000,
     "valyuta": "UZS",
-    "tolangan": 0,
-    "qoldiq": 8300000,
+    "tolangan": 1000000,
+    "qoldiq": 7300000,
     "sana": "2026-09-30",
     "kunQoldi": 16,
     "tur": "Jamoa",
-    "qoldiqSom": 8300000
+    "qoldiqSom": 7300000
    },
    {
     "kim": "Sarkashlar korrektura · 30.09",
@@ -229,7 +229,7 @@
     "qoldiqSom": 8000000
    }
   ],
-  "jamiQoldiqSom": 43802000
+  "jamiQoldiqSom": 42802000
  },
  "kitoblar": [
   {
@@ -364,15 +364,15 @@
  "xarajat30kun": {
   "Ayolimga": 5743200,
   "Kommunal": 356310,
-  "Do'kon": 560970,
-  "Transport": 169692,
-  "Amiti": 134000,
+  "Do'kon": 606970,
+  "Transport": 209100,
+  "Amiti": 249000,
   "Boshqa": 3000100,
   "Sog'liq": 1744000,
-  "Ko'cha ovqatlanish": 1746943,
+  "Ko'cha ovqatlanish": 2400593,
   "Komissiya": 372053.05,
   "Nashriyot": 2350000,
-  "Korzinka": 1745244,
+  "Korzinka": 1814083,
   "Kiyim-kechak": 991500,
   "Oisha park": 96000,
   "Ota-ona": 2950000,
@@ -384,11 +384,13 @@
   "Xodim": 1800000,
   "Cloud subscription": 300000,
   "Qizim": 401000,
-  "naqd qildirish uchun": 878549,
-  "Tahrir": 5000000,
+  "naqd qildirish uchun": 1318549,
+  "Tahrir": 6000000,
   "Sadaqa": 200000,
   "Bosmaxona": 10648000,
-  "Pochta": 32000
+  "Pochta": 32000,
+  "sayt yaratish": 105000,
+  "Sogliq": 350000
  },
  "qarz": [
   {
