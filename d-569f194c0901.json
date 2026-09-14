@@ -1,6 +1,6 @@
 {
- "yangilandi": "2026-09-14T13:16:19.104Z",
- "sana": "2026-09-14",
+ "yangilandi": "2026-09-14T19:16:21.820Z",
+ "sana": "2026-09-15",
  "kurs": {
   "cbu": 11766,
   "nbuSotibOlish": 11750,
@@ -8,33 +8,33 @@
  },
  "kassa": {
   "taqsimot": {
-   "Karta": 7693823.949999999,
+   "Karta": 1273823.9499999993,
    "Hisob": 5148624,
-   "Shaxsiy": 4339140
+   "Shaxsiy": 2339140
   },
-  "jami": 17181587.95
+  "jami": 8761587.95
  },
  "oqim": {
   "kun30": {
-   "kirim": 95181416,
-   "chiqim": 85308623.05,
-   "sof": 9872792.950000003,
+   "kirim": 96261416,
+   "chiqim": 94808623.05,
+   "sof": 1452792.950000003,
    "kunSoni": 30,
-   "kunlikKirim": 3172714
+   "kunlikKirim": 3208714
   },
   "kun60": {
-   "kirim": 95181416,
-   "chiqim": 85308623.05,
-   "sof": 9872792.950000003,
+   "kirim": 96261416,
+   "chiqim": 94808623.05,
+   "sof": 1452792.950000003,
    "kunSoni": 60,
-   "kunlikKirim": 1586357
+   "kunlikKirim": 1604357
   },
   "kun90": {
-   "kirim": 95181416,
-   "chiqim": 85308623.05,
-   "sof": 9872792.950000003,
+   "kirim": 96261416,
+   "chiqim": 94808623.05,
+   "sof": 1452792.950000003,
    "kunSoni": 90,
-   "kunlikKirim": 1057571
+   "kunlikKirim": 1069571
   }
  },
  "tarqatuvchi": {
@@ -362,7 +362,7 @@
   }
  ],
  "xarajat30kun": {
-  "Ayolimga": 5743200,
+  "Ayolimga": 15243200,
   "Kommunal": 356310,
   "Do'kon": 606970,
   "Transport": 209100,
