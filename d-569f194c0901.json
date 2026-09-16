@@ -1,5 +1,5 @@
 {
- "yangilandi": "2026-09-15T19:16:22.864Z",
+ "yangilandi": "2026-09-16T01:16:18.072Z",
  "sana": "2026-09-16",
  "kurs": {
   "cbu": 11765,
@@ -17,8 +17,8 @@
  "oqim": {
   "kun30": {
    "kirim": 96261416,
-   "chiqim": 94808623.05,
-   "sof": 1452792.950000003,
+   "chiqim": 94408623.05,
+   "sof": 1852792.950000003,
    "kunSoni": 30,
    "kunlikKirim": 3208714
   },
@@ -42,9 +42,9 @@
   "yangiTiraj": 210736000,
   "tolangan": 82369000,
   "qoldiq": 279979800,
-  "oxirgi30KunTolov": 76471500,
-  "oxirgi30KunlikOrtacha": 2549050,
-  "tolovKunlariSoni30": 22,
+  "oxirgi30KunTolov": 74529500,
+  "oxirgi30KunlikOrtacha": 2484317,
+  "tolovKunlariSoni30": 21,
   "oxirgiHarakatlar": [
    {
     "sana": "2026-09-13",
@@ -362,9 +362,9 @@
   }
  ],
  "xarajat30kun": {
-  "Ayolimga": 15243200,
   "Kommunal": 356310,
   "Do'kon": 606970,
+  "Ayolimga": 14843200,
   "Transport": 209100,
   "Amiti": 249000,
   "Boshqa": 3000100,
